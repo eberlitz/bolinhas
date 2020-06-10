@@ -22,11 +22,11 @@ const authToken = process.env.TWILLIO_AUTH_TOKEN;
 
 
 app.get('/ice', function (_, res, next) {
-  (async ()=>{
+  (async () => {
     const twilioClient = require('twilio')(accountSid, authToken);
-    const {iceServers} = await twilioClient.tokens.create()
+    const { iceServers } = await twilioClient.tokens.create()
     res.json(iceServers)
-  })().catch(err =>next(err))
+  })().catch(err => next(err))
 })
 
 
@@ -34,9 +34,12 @@ app.get('/ice', function (_, res, next) {
 
 app.use(express.static('dist'))
 
-// Serve the files on port 3000.
-var srv = app.listen(3000, function () {
-  console.log("Example app listening on port 3000!\n");
+
+
+const port = process.env.PORT || 3000;
+// Serve the files on port port.
+var srv = app.listen(port, function () {
+  console.log("Example app listening on port " + port + "!\n");
 });
 
 app.use(
