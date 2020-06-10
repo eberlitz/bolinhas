@@ -21,12 +21,16 @@ const authToken = process.env.TWILLIO_AUTH_TOKEN;
 
 
 
+app.get('/ice', function (_, res, next) {
+  (async ()=>{
+    const twilioClient = require('twilio')(accountSid, authToken);
+    const {iceServers} = await twilioClient.tokens.create()
+    res.json(iceServers)
+  })().catch(err =>next(err))
+})
 
-(async ()=>{
-  const twilioClient = require('twilio')(accountSid, authToken);
-  const {iceServers} = await twilioClient.tokens.create()
-  console.log(iceServers)
-})()
+
+
 
 app.use(express.static('dist'))
 
