@@ -1,12 +1,12 @@
 {
-  "name": "eb-editor",
+  "name": "bolinhas",
   "version": "1.0.0",
   "description": "",
   "private": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack",
-    "start": "node app.js",
+    "start": "node server.js",
     "watch": "webpack --watch"
   },
   "main": "server.js",
@@ -16,7 +16,7 @@
   "dependencies": {
     "dotenv": "^8.2.0",
     "peer": "^0.2.10",
-    "peerjs": "^1.0.0",
+    "peerjs": "^1.2.0",
     "twilio": "^3.46.0"
   },
   "devDependencies": {
