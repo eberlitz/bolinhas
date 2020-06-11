@@ -1,7 +1,8 @@
 import "./style.scss";
 import 'webrtc-adapter';
 import * as Peer from 'peerjs';
-// import { getLocationHash } from './helpers';
+import * as io from 'socket.io-client';
+import { getLocationHash } from './helpers';
 
 
 
@@ -13,7 +14,19 @@ import * as Peer from 'peerjs';
 
     console.log('starting')
 
-    // var { id: targetID } = getLocationHash();
+    var socket = io({
+        host: location.hostname,
+        port: location.port as any || (location.protocol === 'https:' ? 443 : 80),
+        path: '/socket',
+        upgrade: false,
+        transports: ['websocket'],
+    });
+
+    socket.on('peer_joined', (peer_id: string) => {
+        console.log('peer_joined: ' + peer_id);
+    });
+
+    var { room } = getLocationHash();
     const peer = new (Peer as any).default({
         host: location.hostname,
         port: location.port as any || (location.protocol === 'https:' ? 443 : 80),
@@ -28,6 +41,7 @@ import * as Peer from 'peerjs';
         console.log('My peer ID is: ' + id);
         let myIdTxtEl = document.getElementById('myIdTxt');
         myIdTxtEl.innerText = `My peer ID is: ${id}`;
+        room && socket.emit('join', { room, id });
     });
     peer.on('error', function (err) { console.log(err) });
     peer.on('close', function () { console.log('closed') });
