@@ -5,9 +5,14 @@ const peerjs = require("peer");
 
 const app = express();
 
-
-
-
+// const socketio = require('socket.io');
+// io = socketio(app, {
+//   // Remover polling para forçar uso somente de websockets
+//   transports: [ 'websocket'],
+//   serveClient: true
+// });
+// io.on('connection', (socket)=>{
+// })
 
 
 const accountSid = process.env.TWILLIO_ACCOUNT_SID;
@@ -15,13 +20,11 @@ const authToken = process.env.TWILLIO_AUTH_TOKEN;
 
 
 
-app.get('/ice', function (_, res, next) {
-  (async () => {
+app.get('/ice', asyncMiddleware(async (_, res) =>{
     const twilioClient = require('twilio')(accountSid, authToken);
     const { iceServers } = await twilioClient.tokens.create()
     res.json(iceServers)
-  })().catch(err => next(err))
-})
+}));
 
 
 if (process.env.NODE_ENV === 'production') {
@@ -56,3 +59,10 @@ app.use(
     debug: true
   })
 );
+
+function asyncMiddleware( fn) {
+  return (req, res, next) => {
+    Promise.resolve(fn(req, res, next))
+      .catch(next);
+  };
+}

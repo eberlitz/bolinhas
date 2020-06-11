@@ -7,6 +7,12 @@
     <title><%= htmlWebpackPlugin.options.title %></title>
 </head>
 <body>
-    <div id="container"></div>
+    <div id="container">
+        <p id="myIdTxt"></p>
+        <input type="text" name="callTo" id="callToInput">
+        <button id="callToButton">Call</button>
+    </div>
+    <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+    <!-- <script src="/socket.io/socket.io.js"></script> -->
 </body>
 </html>

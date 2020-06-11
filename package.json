@@ -16,6 +16,7 @@
     "dotenv": "^8.2.0",
     "peer": "^0.5.3",
     "peerjs": "^1.2.0",
+    "socket.io": "^2.3.0",
     "twilio": "^3.46.0"
   },
   "devDependencies": {
