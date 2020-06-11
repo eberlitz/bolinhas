@@ -1,9 +1,13 @@
+import * as p5 from "p5";
 import "./style.scss";
 import 'webrtc-adapter';
 import * as Peer from 'peerjs';
 import * as io from 'socket.io-client';
 import { getLocationHash } from './helpers';
+import { p5init } from "./engine/sketch";
 
+
+export const sketch = p5init();
 
 async function requestAudio() {
     const localAudioStream = await navigator.mediaDevices
@@ -13,8 +17,6 @@ async function requestAudio() {
         })
     return localAudioStream;
 }
-
-
 
 var { room } = getLocationHash();
 console.log("Room: ", room);

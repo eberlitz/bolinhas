@@ -49,6 +49,10 @@ if (process.env.NODE_ENV === 'production') {
 const accountSid = process.env.TWILLIO_ACCOUNT_SID;
 const authToken = process.env.TWILLIO_AUTH_TOKEN;
 app.get('/ice', asyncMiddleware(async (_, res) => {
+  if(!accountSid){
+    res.json([])
+    return;
+  }
   const twilioClient = require('twilio')(accountSid, authToken);
   const { iceServers } = await twilioClient.tokens.create()
   res.json(iceServers)
