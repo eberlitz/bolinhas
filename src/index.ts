@@ -1,13 +1,13 @@
+import * as p5 from "p5";
 import "./style.scss";
 import 'webrtc-adapter';
 import * as Peer from 'peerjs';
 import * as io from 'socket.io-client';
 import { getLocationHash } from './helpers';
+import { p5init } from "./engine/sketch";
 
 
-
-
-
+export const sketch = p5init();
 (async () => {
     // const iceServers: any[] = [];
     const iceServers = await fetch('/ice').then(response => response.json())
