@@ -29,9 +29,9 @@ import * as Peer from 'peerjs';
         let myIdTxtEl = document.getElementById('myIdTxt');
         myIdTxtEl.innerText = `My peer ID is: ${id}`;
     });
-    peer.on('error', function(err) { console.log(err) });
-    peer.on('close', function() { console.log('closed') });
-    peer.on('disconnected', function() { console.log('disconnected') });
+    peer.on('error', function (err) { console.log(err) });
+    peer.on('close', function () { console.log('closed') });
+    peer.on('disconnected', function () { console.log('disconnected') });
 
     async function requestAudio() {
         const localAudioStream = await navigator.mediaDevices
@@ -45,18 +45,28 @@ import * as Peer from 'peerjs';
     async function makeCall(peer_id: string) {
         const localAudioStream = await requestAudio();
         const call = peer.call(peer_id, localAudioStream);
+        attachOnStream(call)
+    }
+
+    function attachOnStream(call: Peer.MediaConnection) {
         // get the media stream of the other peer 
         call.on('stream', function (stream) {
-            console.log('receiving stream from ', peer_id)
-            const peer_audio = document.createElement("audio")
-            peer_audio.srcObject = stream;
-            peer_audio.onloadedmetadata = function(e){
+            console.log('receiving stream from ', call.peer)
+            const peer_audio = document.createElement("audio") as HTMLAudioElement;
+            // Older browsers may not have srcObject
+            if ("srcObject" in peer_audio as any) {
+                peer_audio.srcObject = stream;
+            } else {
+                // Avoid using this in new browsers, as it is going away.
+                peer_audio.src = window.URL.createObjectURL(stream);
+            }
+            peer_audio.onloadedmetadata = function (e) {
                 console.log('now playing the audio');
                 peer_audio.play();
             }
             document.body.appendChild(peer_audio)
         });
-        call.on('error', function(err) { console.log(err) });
+        call.on('error', function (err) { console.log(err) });
     }
 
     //Answer call
@@ -66,13 +76,7 @@ import * as Peer from 'peerjs';
         // Answer the call, providing our mediaStream
         call.answer(localAudioStream);
         // get the media stream of the other peer 
-        call.on('stream', function (stream) {
-            console.log('receiving stream from ', call.peer)
-            const peer_audio = document.createElement("audio")
-            peer_audio.src = window.URL.createObjectURL(stream);
-            document.body.appendChild(peer_audio)
-        });
-        call.on('error', function(err) { console.log(err) });
+        attachOnStream(call)
     });
 
 
