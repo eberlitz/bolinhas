@@ -8,6 +8,9 @@ import { requestAudio, setupPeerjs } from "./audiopeer";
 import { p5init } from "./engine/sketch";
 import { Player } from "./engine/player";
 import { PlayerProvider, PlayerData } from "./player_provider";
+import EventEmitter = require('events');
+import { mode } from "../webpack.common";
+import { InteractionInstance } from "twilio/lib/rest/proxy/v1/service/session/interaction";
 
 
 
@@ -48,6 +51,31 @@ async function init() {
 
     p5init(playerProvider);
 
+    var model = new Model();
+
+    model.Add()
+    model.Update()
+    model.Remove()
+
+
+    /*
+
+    {
+        me: {
+            id:
+            nickname:
+            color:
+            pos:[x,y]
+        },
+        nodes:[
+            {},
+        ]
+    }
+
+
+
+    */
+
 
 
     socket.on('connect', () => {
@@ -71,3 +99,27 @@ async function init() {
     })
 }
 
+
+export class Model extends EventEmitter {
+    public nodes: Node[];
+    public me: Node;
+}
+
+export class Node extends EventEmitter {
+    private id: string;
+    private nickname: string;
+    private color: number;
+    private pos: [number, number];
+    
+    constructor(private model: Model) {
+        super();
+    }
+
+    
+
+    setPos(x: number, y: number) {
+        this.pos = [x, y]
+        this.emit("position", this.pos)
+        // this.model.emit("update", this)
+    }
+}

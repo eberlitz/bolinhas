@@ -14,30 +14,27 @@ const io = require('socket.io')(httpServer, {
 io.on('connection', (socket) => {
   console.log('a user connected');
   let peerId;
+  const rooms = [];
 
   socket.on('join', (room, player) => {
-    socket.join(room);
-
-    // peerId: string;
-    // nickname: string;
-    // pos: [number, number];
-
-    socket.broadcast.to(room).emit("peer_joined", player);
     peerId = player.peerId;
-  })
-
-  socket.on('update', (player) => {
-    Object.keys(socket.rooms).forEach(room => {
-      if (socket.rooms != socket.id) {
-        socket.broadcast.to(room).emit('update', player);
+    socket.join(room, (err) => {
+      if (!err) {
+        rooms = [...rooms, room];
       }
     })
+    socket.broadcast.to(room).emit("update", player);
+  })
+
+  socket.on('update', (room, player) => {
+    socket.broadcast.to(room).emit('update', player);
   })
 
   socket.on('disconnect', () => {
-    // this will emit to rooms that the user was not part- BAD
-    // socket.broadcast.emit("peer_left", peerId);
     console.log('user disconnected');
+    rooms.forEach(room => {
+      socket.broadcast.to(room).emit('peer_left', peerId);
+    })
   });
 })
 
@@ -62,7 +59,7 @@ if (process.env.NODE_ENV === 'production') {
 const accountSid = process.env.TWILLIO_ACCOUNT_SID;
 const authToken = process.env.TWILLIO_AUTH_TOKEN;
 app.get('/ice', asyncMiddleware(async (_, res) => {
-  if(!accountSid){
+  if (!accountSid) {
     res.json([])
     return;
   }
