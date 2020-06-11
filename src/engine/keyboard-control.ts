@@ -58,7 +58,7 @@ export class KeyboardController {
                 this.executionPipeline.set(keys.DOWN, this.generateForceFn(0, 1));
                 break;
         }
-        this.target.updateRemote && this.target.updateRemote();
+        // this.target.updateRemote && this.target.updateRemote();
     }
 
     onKeyUp = (event: KeyboardEvent) => {
@@ -77,7 +77,7 @@ export class KeyboardController {
                 break;
         }
 
-        this.target.updateRemote && this.target.updateRemote();
+        // this.target.updateRemote && this.target.updateRemote();
     }
     generateForceFn(x: number, y: number) {
         return () => {
