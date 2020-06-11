@@ -1,6 +1,8 @@
 import "./style.scss";
+import 'webrtc-adapter';
 import * as Peer from 'peerjs';
 // import { getLocationHash } from './helpers';
+
 
 
 
@@ -48,6 +50,10 @@ import * as Peer from 'peerjs';
             console.log('receiving stream from ', peer_id)
             const peer_audio = document.createElement("audio")
             peer_audio.srcObject = stream;
+            peer_audio.onloadedmetadata = function(e){
+                console.log('now playing the audio');
+                peer_audio.play();
+            }
             document.body.appendChild(peer_audio)
         });
         call.on('error', function(err) { console.log(err) });

@@ -17,7 +17,8 @@
     "peer": "^0.5.3",
     "peerjs": "^1.2.0",
     "socket.io": "^2.3.0",
-    "twilio": "^3.46.0"
+    "twilio": "^3.46.0",
+    "webrtc-adapter": "^7.6.1"
   },
   "devDependencies": {
     "@types/peerjs": "^1.1.0",
