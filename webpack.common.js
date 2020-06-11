@@ -28,7 +28,7 @@ module.exports = {
       chunkFilename: "[id].css"
     }),
     new HtmlWebpackPlugin({
-      title: "eb-editor",
+      title: "bolinhas",
       template: "./src/index.html",
       chunks: ["app"]
     })
