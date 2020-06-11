@@ -6,21 +6,7 @@ const peerjs = require("peer");
 const app = express();
 
 
-if (process.env.NODE_ENV !== 'production') {
-  const webpack = require("webpack");
-  const webpackDevMiddleware = require("webpack-dev-middleware");
-  const config = require("./webpack.dev.js");
-  const compiler = webpack(config);
-  // Tell express to use the webpack-dev-middleware and use the webpack.config.js
-  // configuration file as a base.
-  app.use(
-    webpackDevMiddleware(compiler, {
-      publicPath: config.output.publicPath
-    })
-  );
-} else {
-  app.use(express.static('dist'))
-}
+
 
 
 
@@ -38,7 +24,21 @@ app.get('/ice', function (_, res, next) {
 })
 
 
-
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static('dist'))
+} else {
+  const webpack = require("webpack");
+  const webpackDevMiddleware = require("webpack-dev-middleware");
+  const config = require("./webpack.dev.js");
+  const compiler = webpack(config);
+  // Tell express to use the webpack-dev-middleware and use the webpack.config.js
+  // configuration file as a base.
+  app.use(
+    webpackDevMiddleware(compiler, {
+      publicPath: config.output.publicPath
+    })
+  );
+}
 
 
 
