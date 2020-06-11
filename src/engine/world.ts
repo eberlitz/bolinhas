@@ -1,7 +1,6 @@
 import *  as p5 from "p5";
 import { Player } from "./player";
 import { KeyboardController } from "./keyboard-control";
-import { PlayerData } from "../player_provider";
 import { Model } from "../model";
 
 export class World {
@@ -47,7 +46,7 @@ export class World {
             const player = this.players.filter(a => a.node.Id() === n.Id())[0]
             let idx = this.players.indexOf(player);
             if (idx != -1) {
-                this.players.slice(idx, 1);
+                this.players.splice(idx, 1);
             }
         })
 

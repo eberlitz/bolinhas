@@ -25,8 +25,6 @@ export class Model extends EventEmitter {
             this.nodes.splice(idx, 1)
             delete this.nodesMap[n.Id()];
             this.emit('deleted', n)
-            // TODO: maybe remove this
-            this.removeAllListeners();
             return true;
         }
         return false
@@ -119,6 +117,13 @@ export class ModelNode extends EventEmitter {
             color: this.getColor(),
             nickname: this.getNickname(),
             pos: this.getPos(),
-        };
+        } as ModelNodeJSON;
     }
+}
+
+export interface ModelNodeJSON {
+    id: string;
+    color: number;
+    nickname: string;
+    pos: Vec2;
 }

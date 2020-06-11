@@ -17,7 +17,7 @@ io.on('connection', (socket) => {
   let rooms = [];
 
   socket.on('join', (room, player) => {
-    peerId = player.peerId;
+    peerId = player.id;
     socket.join(room, (err) => {
       if (!err) {
         rooms = [...rooms, room];

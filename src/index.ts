@@ -4,8 +4,7 @@ import { getLocationHash } from './helpers';
 import { requestAudio, setupPeerjs } from "./audiopeer";
 
 import { p5init } from "./engine/sketch";
-import { PlayerData } from "./player_provider";
-import { Model, ModelNode } from "./model";
+import { Model, ModelNode, ModelNodeJSON } from "./model";
 
 
 
@@ -29,10 +28,6 @@ async function init() {
     var model = new Model();
 
     const audioBroker = await setupPeerjs(iceServers, localAudioStream, model)
-
-    const myPlayer = {} as PlayerData;
-    (window as any).myPlayer = myPlayer;
-
     console.log('starting')
 
 
@@ -68,14 +63,20 @@ async function init() {
         socket.emit('join', room, myNode.toJSON());
     })
 
-    socket.on('update', (p: PlayerData) => {
+    socket.on('update', (p: ModelNodeJSON) => {
         console.log('update', p)
-        let n = model.GetNode(p.peerId);
+        let n = model.GetNode(p.id);
         if (!n) {
-            n = new ModelNode(p.peerId)
+            n = new ModelNode(p.id)
             model.Add(n)
         }
         n.apply(p);
+    })
+
+    socket.on('peer_left', (id: string) => {
+        console.log('left', id);
+        const n = model.GetNode(id);
+        model.Delete(n)
     })
 }
 
