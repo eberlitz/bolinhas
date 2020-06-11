@@ -79,19 +79,22 @@ async function init() {
 
 
     socket.on('connect', () => {
-        console.log('My peer ID is: ' + audioBroker.peerID);
+        const peerId = audioBroker.peerID;
+        console.log('My peer ID is: ' + peerId);
+        const newNode = new Node(peerId);
+        model.Add(newNode)
         console.log(`Joining room "${room} ..."`);
+        socket.emit('join', room, { peerId } as PlayerData);
+        // const myPlayer = playerProvider.updateMainPlayer(audioBroker.peerID)
+        // Object.assign(myPlayer, myPlayer)
 
-        const myPlayer = playerProvider.updateMainPlayer(audioBroker.peerID)
-        Object.assign(myPlayer, myPlayer)
-        socket.emit('join', room, myPlayer);
     })
 
-    socket.on('peer_joined', (data: PlayerData) => {
-        console.log('peer_joined: ', data);
-        playerProvider.updateLocalPlayer(data)
-        audioBroker.makeAudioCall(data.peerId)
-    });
+    // socket.on('peer_joined', (data: PlayerData) => {
+    //     console.log('peer_joined: ', data);
+    //     playerProvider.updateLocalPlayer(data)
+    //     audioBroker.makeAudioCall(data.peerId)
+    // });
 
     socket.on('update', (p: PlayerData) => {
         console.log('update', p)
@@ -101,25 +104,54 @@ async function init() {
 
 
 export class Model extends EventEmitter {
+    private nodesMap: { [id: string]: Node };
     public nodes: Node[];
     public me: Node;
+
+    Add(n: Node) {
+        this.nodes.push(n)
+        this.nodesMap[n.PeerId()] = n;
+        this.emit('added', n)
+    }
+
+    Delete(n: Node): boolean {
+        const idx = this.nodes.indexOf(n);
+        if (idx != -1) {
+            this.nodes.splice(idx, 1)
+            delete this.nodesMap[n.PeerId()];
+            this.emit('deleted', n)
+            return true;
+        }
+        return false
+    }
+
+    Has(id: string) {
+        return !!this.nodesMap[id];
+    }
 }
 
+type vec2 = [number, number];
+
 export class Node extends EventEmitter {
-    private id: string;
     private nickname: string;
     private color: number;
-    private pos: [number, number];
-    
-    constructor(private model: Model) {
+    private pos: vec2;
+
+    constructor(private id: string) {
         super();
     }
 
-    
+    PeerId() {
+        return this.id;
+    }
 
-    setPos(x: number, y: number) {
-        this.pos = [x, y]
+    setPos(pos: vec2) {
+        this.pos = pos;
         this.emit("position", this.pos)
         // this.model.emit("update", this)
+    }
+
+    getPos(): vec2 {
+        return this.pos.slice(0) as vec2;
     }
 }
