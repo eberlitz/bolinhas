@@ -7,6 +7,7 @@ import * as Peer from 'peerjs';
 (async () => {
     const iceServers = await fetch('/ice').then(response => response.json())
 
+    console.log('starting')
 
     // var { id: targetID } = getLocationHash();
     const peer = new (Peer as any).default({
