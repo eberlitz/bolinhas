@@ -9,12 +9,17 @@ export const p5init = (pp: PlayerProvider) => {
         const world = new World(p, pp);
         p.setup = () => {
             const size = [800, 600]
-            p.createCanvas(size[0], size[1]);
+            
+            p.createCanvas(p.windowWidth, p.windowHeight);
             world.setup(size);
         }
     
         p.draw = () => {
             world.draw();
         }
+
+        p.windowResized = ()=> {
+            p.resizeCanvas(p.windowWidth, p.windowHeight);
+          }
     }, document.getElementById("p5-container"));
 }
