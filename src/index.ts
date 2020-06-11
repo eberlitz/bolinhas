@@ -1,10 +1,9 @@
+import * as p5 from "p5";
 import "./style.scss";
 import * as Peer from 'peerjs';
 import * as io from 'socket.io-client';
 import { getLocationHash } from './helpers';
 import { requestAudio, setupPeerjs } from "./audiopeer";
-import { InteractionInstance } from "twilio/lib/rest/proxy/v1/service/session/interaction";
-
 
 
 interface PlayerData {
@@ -12,6 +11,12 @@ interface PlayerData {
     nickname: string;
     pos: [number, number];
 }
+
+import { p5init } from "./engine/sketch";
+
+
+export const sketch = p5init();
+
 
 document.addEventListener("DOMContentLoaded", function (event) {
     init().catch(err => console.error(err))
