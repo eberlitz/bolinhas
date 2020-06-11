@@ -15,10 +15,23 @@ io.on('connection', (socket) => {
   console.log('a user connected');
   let peerId;
 
-  socket.on('join', ({ room, id }) => {
+  socket.on('join', (room, player) => {
     socket.join(room);
-    socket.broadcast.to(room).emit("peer_joined", id);
-    peerId = id;
+
+    // peerId: string;
+    // nickname: string;
+    // pos: [number, number];
+
+    socket.broadcast.to(room).emit("peer_joined", player);
+    peerId = player.peerId;
+  })
+
+  socket.on('update', (player) => {
+    Object.keys(socket.rooms).forEach(room => {
+      if (socket.rooms != socket.id) {
+        socket.broadcast.to(room).emit('update', player);
+      }
+    })
   })
 
   socket.on('disconnect', () => {
