@@ -3,7 +3,7 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CleanWebpackPlugin = require("clean-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
-const mode = "development"; // || "production"; //process.env.NODE_ENV;
+const mode = process.env.NODE_ENV || "production";
 
 module.exports = {
   mode: mode,
@@ -12,10 +12,6 @@ module.exports = {
   },
   entry: {
     app: "./src/index.ts",
-  },
-  devtool: "inline-source-map",
-  devServer: {
-    contentBase: "./dist"
   },
   output: {
     globalObject: "self",

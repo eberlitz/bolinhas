@@ -5,9 +5,8 @@
   "private": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack",
-    "start": "node server.js",
-    "watch": "webpack --watch"
+    "build": "webpack --config webpack.prod.js",
+    "start": "node server.js"
   },
   "main": "server.js",
   "keywords": [],
@@ -15,7 +14,7 @@
   "license": "MIT",
   "dependencies": {
     "dotenv": "^8.2.0",
-    "peer": "^0.2.10",
+    "peer": "^0.5.3",
     "peerjs": "^1.2.0",
     "twilio": "^3.46.0"
   },
@@ -34,6 +33,7 @@
     "webpack": "^4.31.0",
     "webpack-cli": "^3.3.2",
     "webpack-dev-middleware": "^3.7.0",
-    "webpack-dev-server": "^3.4.1"
+    "webpack-dev-server": "^3.4.1",
+    "webpack-merge": "^4.2.2"
   }
 }
