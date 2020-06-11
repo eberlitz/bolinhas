@@ -5,10 +5,23 @@ import * as io from 'socket.io-client';
 import { getLocationHash } from './helpers';
 
 
+async function requestAudio() {
+    const localAudioStream = await navigator.mediaDevices
+        .getUserMedia({
+            video: false,
+            audio: true,
+        })
+    return localAudioStream;
+}
 
+
+
+var { room } = getLocationHash();
+console.log("Room: ", room);
 
 
 (async () => {
+    const localAudioStream = await requestAudio()
     // const iceServers: any[] = [];
     const iceServers = await fetch('/ice').then(response => response.json())
 
@@ -21,12 +34,16 @@ import { getLocationHash } from './helpers';
         upgrade: false,
         transports: ['websocket'],
     });
+    socket.on('connect',()=>{
+        console.log('connected')
+    })
 
     socket.on('peer_joined', (peer_id: string) => {
         console.log('peer_joined: ' + peer_id);
+        makeCall(peer_id)
     });
 
-    var { room } = getLocationHash();
+    
     const peer = new (Peer as any).default({
         host: location.hostname,
         port: location.port as any || (location.protocol === 'https:' ? 443 : 80),
@@ -34,30 +51,20 @@ import { getLocationHash } from './helpers';
         config: {
             iceServers: [{ url: 'stun:stun1.l.google.com:19302' }].concat(iceServers || [])
         },
-        debug: 3
-    }) as Peer;
+        debug: 1,
+    } as Peer.PeerConnectOption) as Peer;
 
     peer.on('open', function (id) {
         console.log('My peer ID is: ' + id);
-        let myIdTxtEl = document.getElementById('myIdTxt');
-        myIdTxtEl.innerText = `My peer ID is: ${id}`;
-        room && socket.emit('join', { room, id });
+        console.log(`Joining room "${room} ..."`);
+        socket.emit('join', { room, id });
     });
     peer.on('error', function (err) { console.log(err) });
     peer.on('close', function () { console.log('closed') });
     peer.on('disconnected', function () { console.log('disconnected') });
 
-    async function requestAudio() {
-        const localAudioStream = await navigator.mediaDevices
-            .getUserMedia({
-                video: false,
-                audio: true,
-            })
-        return localAudioStream;
-    }
-
+    
     async function makeCall(peer_id: string) {
-        const localAudioStream = await requestAudio();
         const call = peer.call(peer_id, localAudioStream);
         attachOnStream(call)
     }
@@ -86,7 +93,6 @@ import { getLocationHash } from './helpers';
     //Answer call
     peer.on('call', async (call) => {
         console.log('receiving call from ', call.peer)
-        const localAudioStream = await requestAudio()
         // Answer the call, providing our mediaStream
         call.answer(localAudioStream);
         // get the media stream of the other peer 
@@ -94,12 +100,6 @@ import { getLocationHash } from './helpers';
     });
 
 
-    let callToButtonEl = document.getElementById('callToButton');
-    callToButtonEl.onclick = function () {
-        let callToInputEl = document.getElementById('callToInput') as HTMLInputElement;
-        const target = callToInputEl.value;
-        makeCall(target)
-    }
     // document.addEventListener("DOMContentLoaded", function (event) {
     // }, false);
 
