@@ -1,8 +1,8 @@
 import *  as p5 from "p5";
 import { Player } from "./player";
-import { Controller } from "./controller";
 import { KeyboardController } from "./keyboard-control";
-import { PlayerProvider, PlayerData } from "../player_provider";
+import { PlayerData } from "../player_provider";
+import { Model } from "../model";
 
 export class World {
     mainPlayer: Player;
@@ -10,27 +10,47 @@ export class World {
     debug = false;
     staticObjs: p5.Vector[];
     mainController = new KeyboardController();
+    players: Player[] = [];
 
-    constructor(private p: p5, private playerProvider: PlayerProvider) {
+    constructor(private p: p5, private playerProvider: Model) {
         this.staticObjs = []
         this.createBackgroundObjects();
-        this.mainPlayer = this.createPlayer();
-        this.mainPlayer.updateRemote = () => {
-            this.playerProvider.updateRemotePlayer(this.mainPlayer);
-        }
-        playerProvider.updateMainPlayer = (peerId: string) => {
-            this.mainPlayer.peerId = peerId;
-            return {
-                peerId,
-                pos: this.mainPlayer.pos.array()
-            } as PlayerData;
-        }
 
-        playerProvider.onNewPlayer = (peerId: string) => {
+
+
+
+        // let p5Player = this.players[p.peerId];
+        // if (!p5Player) {
+        //     this.players[p.peerId] = p5Player = this.onNewPlayer(p.peerId)
+        // }
+        // p5Player.pos.set(p.pos[0], p.pos[1]);
+
+        playerProvider.on('added', (n) => {
             const player = this.createPlayer();
-            player.peerId = peerId;
-            return player;
-        }
+            player.node = n;
+
+            // Is my player?
+            if (playerProvider.myId === n.Id()) {
+                this.mainPlayer = player;
+                this.mainController.attach(player);
+            } else {
+                n.on('position', pos => {
+                    player.pos.set(pos[0], pos[1])
+                })
+                // TODO: needs to remove this listened on removal
+            }
+
+            this.players.push(player);
+        })
+
+        playerProvider.on('deleted', (n) => {
+            const player = this.players.filter(a => a.node.Id() === n.Id())[0]
+            let idx = this.players.indexOf(player);
+            if (idx != -1) {
+                this.players.slice(idx, 1);
+            }
+        })
+
     }
 
     private createBackgroundObjects() {
@@ -45,8 +65,7 @@ export class World {
 
     setup(size: number[]) {
         this.size = size;
-        
-        this.mainController.attach(this.mainPlayer);
+
     }
 
     private createPlayer() {
@@ -59,15 +78,15 @@ export class World {
 
     draw() {
         this.p.background(0, 0, 200);
-
-        this.centerOn(this.mainPlayer.pos);
+        if (this.mainPlayer){
+            this.centerOn(this.mainPlayer.pos);
+        }
         this.mainController.update();
         this.staticObjs.forEach(obj => {
             this.p.square(obj.x, obj.y, 10)
         })
-        this.mainPlayer.update();
-        for (const i in this.playerProvider.players) {
-            this.playerProvider.players[i].update();
+        for (const i in this.players) {
+            this.players[i].update();
         }
     }
 
