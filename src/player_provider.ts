@@ -8,7 +8,16 @@ export class PlayerProvider {
 
     public updateMainPlayer: (peerId: string) => PlayerData;
 
-    constructor(private socket: typeof io.Socket) { }
+    public updateRemotePlayer: (p: Player) => void;
+
+    constructor(private socket: typeof io.Socket) {
+        this.updateRemotePlayer = throttle((p: Player) => {
+            this.socket.emit('update', {
+                peerId: p.peerId,
+                pos: p.pos.array(),
+            } as PlayerData)
+        }, 33)
+    }
 
     public updateLocalPlayer(p: PlayerData) {
         let p5Player = this.players[p.peerId];
@@ -17,15 +26,20 @@ export class PlayerProvider {
         }
         p5Player.pos.set(p.pos[0], p.pos[1]);
     }
-
-    public updateRemotePlayer(p: Player) {
-        this.socket.emit('update', {
-            peerId: p.peerId,
-            pos: p.pos.array(),
-        } as PlayerData)
-    }
 }
 
+function throttle(func: any, limit: number) {
+    let inThrottle = false;
+    return function () {
+        const args = arguments
+        const context = this
+        if (!inThrottle) {
+            func.apply(context, args)
+            inThrottle = true
+            setTimeout(() => inThrottle = false, limit)
+        }
+    }
+}
 
 export interface PlayerData {
     peerId: string;
