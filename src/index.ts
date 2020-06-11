@@ -5,17 +5,11 @@ import * as io from 'socket.io-client';
 import { getLocationHash } from './helpers';
 import { requestAudio, setupPeerjs } from "./audiopeer";
 
-
-interface PlayerData {
-    peerId: string;
-    nickname: string;
-    pos: [number, number];
-}
-
 import { p5init } from "./engine/sketch";
+import { Player } from "./engine/player";
+import { PlayerProvider, PlayerData } from "./player_provider";
 
 
-export const sketch = p5init();
 
 
 document.addEventListener("DOMContentLoaded", function (event) {
@@ -40,6 +34,8 @@ async function init() {
 
     console.log('starting')
 
+
+
     var socket = io({
         host: location.hostname,
         port: location.port as any || (location.protocol === 'https:' ? 443 : 80),
@@ -47,29 +43,31 @@ async function init() {
         upgrade: false,
         transports: ['websocket'],
     });
+
+    const playerProvider = new PlayerProvider(socket);
+
+    p5init(playerProvider);
+
+
+
     socket.on('connect', () => {
         console.log('My peer ID is: ' + audioBroker.peerID);
         console.log(`Joining room "${room} ..."`);
-        Object.assign(myPlayer, { peerId: audioBroker.peerID, nickname: "", pos: [0, 0] })
+
+        const myPlayer = playerProvider.updateMainPlayer(audioBroker.peerID)
+        Object.assign(myPlayer, myPlayer)
         socket.emit('join', room, myPlayer);
     })
 
     socket.on('peer_joined', (data: PlayerData) => {
-        console.log('peer_joined: ' , data);
+        console.log('peer_joined: ', data);
+        playerProvider.updateLocalPlayer(data)
         audioBroker.makeAudioCall(data.peerId)
     });
 
     socket.on('update', (p: PlayerData) => {
         console.log('update', p)
+        playerProvider.updateLocalPlayer(p)
     })
-
-    function updatePlayer() {
-        socket.emit('update', myPlayer)
-    }
-
-    (window as any).updatePlayer = updatePlayer;
-
 }
-
-
 

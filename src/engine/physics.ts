@@ -1,6 +1,5 @@
 
-import p5 = require("p5");
-import { sketch } from "..";
+import * as p5 from "p5";
 
 interface IPhysicsOptions {
     debug: boolean;
@@ -12,12 +11,13 @@ export class Physics {
     vel: p5.Vector;
     acc: p5.Vector;
     constructor(
+        protected p:p5,
         // public mass: number,
-        public pos = sketch.createVector(),
+        public pos = p.createVector(),
         protected options?: IPhysicsOptions
     ) {
-        this.vel = sketch.createVector();
-        this.acc = sketch.createVector();
+        this.vel = p.createVector();
+        this.acc = p.createVector();
     }
 
     update() {

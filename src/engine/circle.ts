@@ -1,7 +1,8 @@
 
-import p5 = require("p5");
+import * as p5 from "p5";
 import { Physics } from "./physics";
-import { sketch } from "..";
+
+
 
 export class CircularBody extends Physics {
 	color: { r: number; g: number; b: number; a?: number; } = {
@@ -9,8 +10,8 @@ export class CircularBody extends Physics {
 		g: 255,
 		b: 255,
 	};
-	constructor(public radius: number, ...args: any[]) {
-		super(...args);
+	constructor(public p: p5, public radius: number, ...args: any[]) {
+		super(p, ...args);
 	}
 
 	update() {
@@ -41,13 +42,13 @@ export class CircularBody extends Physics {
 	}
 
 	draw() {
-		sketch.fill(this.color.r, this.color.g, this.color.b, this.color.a);
-		sketch.ellipse(this.pos.x, this.pos.y, this.radius * 2, this.radius * 2);
+		this.p.fill(this.color.r, this.color.g, this.color.b, this.color.a);
+		this.p.ellipse(this.pos.x, this.pos.y, this.radius * 2, this.radius * 2);
 
         if(this.options.debug){
             let vel = this.vel.x + '; ' + this.vel.y
-            sketch.fill(50);
-            sketch.text(vel, 10, 10, 70, 80);
+            this.p.fill(50);
+            this.p.text(vel, 10, 10, 70, 80);
 
         }
 	}

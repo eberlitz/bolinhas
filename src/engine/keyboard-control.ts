@@ -1,6 +1,7 @@
 import p5 = require("p5");
 import { Physics } from "./physics";
 import { Controller } from "./controller";
+import { Player } from "./player";
 
 interface IControllerSetup {
     UP: number;
@@ -26,11 +27,11 @@ const arrows = {
     LEFT: 37
 }
 
-export class KeyboardController extends Controller {
-    target?: Physics;
+export class KeyboardController {
+    target?: Player;
     executionPipeline: Map<keys, () => void> = new Map();
     controllerSetup: IControllerSetup = wasd;
-    attach(target: Physics) {
+    attach(target: Player) {
         this.target = target;
         window.addEventListener('keydown', this.onKeyDown);
         window.addEventListener('keyup', this.onKeyUp);
@@ -57,6 +58,7 @@ export class KeyboardController extends Controller {
                 this.executionPipeline.set(keys.DOWN, this.generateForceFn(0, 1));
                 break;
         }
+        this.target.updateRemote && this.target.updateRemote();
     }
 
     onKeyUp = (event: KeyboardEvent) => {
@@ -74,6 +76,8 @@ export class KeyboardController extends Controller {
                 this.executionPipeline.delete(keys.DOWN);
                 break;
         }
+
+        this.target.updateRemote && this.target.updateRemote();
     }
     generateForceFn(x: number, y: number) {
         return () => {
