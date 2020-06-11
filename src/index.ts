@@ -6,8 +6,8 @@ import * as Peer from 'peerjs';
 
 
 (async () => {
-    const iceServers: any[] = [];
-    // const iceServers = await fetch('/ice').then(response => response.json())
+    // const iceServers: any[] = [];
+    const iceServers = await fetch('/ice').then(response => response.json())
 
     console.log('starting')
 
