@@ -53,30 +53,13 @@ async function init() {
 
     var model = new Model();
 
-    model.Add()
-    model.Update()
-    model.Remove()
 
-
-    /*
-
-    {
-        me: {
-            id:
-            nickname:
-            color:
-            pos:[x,y]
-        },
-        nodes:[
-            {},
-        ]
-    }
-
-
-
-    */
-
-
+    model.on('added', (n) => {
+        // Make audio call to anyone else other than me
+        if (n.Id() != audioBroker.peerID) {
+            audioBroker.makeAudioCall(n.Id())
+        }
+    })
 
     socket.on('connect', () => {
         const peerId = audioBroker.peerID;
@@ -84,25 +67,26 @@ async function init() {
         const newNode = new Node(peerId);
         model.Add(newNode)
         console.log(`Joining room "${room} ..."`);
-        socket.emit('join', room, { peerId } as PlayerData);
-        // const myPlayer = playerProvider.updateMainPlayer(audioBroker.peerID)
-        // Object.assign(myPlayer, myPlayer)
-
+        socket.emit('join', room, newNode.toJSON());
     })
-
-    // socket.on('peer_joined', (data: PlayerData) => {
-    //     console.log('peer_joined: ', data);
-    //     playerProvider.updateLocalPlayer(data)
-    //     audioBroker.makeAudioCall(data.peerId)
-    // });
 
     socket.on('update', (p: PlayerData) => {
         console.log('update', p)
-        playerProvider.updateLocalPlayer(p)
+        let n = model.GetNode(p.peerId);
+        if (!n) {
+            n = new Node(p.peerId)
+            model.Add(n)
+        }
+        n.apply(p);
     })
 }
 
 
+export declare interface Model {
+    on(event: 'added', listener: (n: Node) => void): this;
+    on(event: 'deleted', listener: (n: Node) => void): this;
+    on(event: string, listener: Function): this;
+}
 export class Model extends EventEmitter {
     private nodesMap: { [id: string]: Node };
     public nodes: Node[];
@@ -110,7 +94,7 @@ export class Model extends EventEmitter {
 
     Add(n: Node) {
         this.nodes.push(n)
-        this.nodesMap[n.PeerId()] = n;
+        this.nodesMap[n.Id()] = n;
         this.emit('added', n)
     }
 
@@ -118,19 +102,32 @@ export class Model extends EventEmitter {
         const idx = this.nodes.indexOf(n);
         if (idx != -1) {
             this.nodes.splice(idx, 1)
-            delete this.nodesMap[n.PeerId()];
+            delete this.nodesMap[n.Id()];
             this.emit('deleted', n)
             return true;
         }
         return false
     }
 
-    Has(id: string) {
-        return !!this.nodesMap[id];
+    HasNode(id: string) {
+        return !!this.GetNode(id);
+    }
+
+    GetNode(id: string) {
+        return this.nodesMap[id];
     }
 }
 
 type vec2 = [number, number];
+
+
+export declare interface Node {
+    on(event: 'position', listener: (n: vec2) => void): this;
+    on(event: 'nickname', listener: (n: string) => void): this;
+    on(event: 'color', listener: (n: number) => void): this;
+    on(event: 'updated', listener: (n: Node) => void): this;
+    on(event: string, listener: Function): this;
+}
 
 export class Node extends EventEmitter {
     private nickname: string;
@@ -141,17 +138,60 @@ export class Node extends EventEmitter {
         super();
     }
 
-    PeerId() {
+    Id() {
         return this.id;
     }
 
     setPos(pos: vec2) {
         this.pos = pos;
         this.emit("position", this.pos)
-        // this.model.emit("update", this)
+        this.emit("updated", this)
+    }
+
+    setNickname(nickname: any) {
+        this.nickname = nickname;
+        this.emit("nickname", this.pos)
+        this.emit("updated", this)
+    }
+
+    setColor(color: any) {
+        this.color = color;
+        this.emit("color", this.pos)
+        this.emit("updated", this)
     }
 
     getPos(): vec2 {
         return this.pos.slice(0) as vec2;
+    }
+
+    getNickname() {
+        return this.nickname;
+    }
+
+    getColor() {
+        return this.color;
+    }
+
+    apply(obj: any) {
+        if (typeof obj.pos !== 'undefined') {
+            this.setPos(obj.pos)
+        }
+
+        if (typeof obj.nickname !== 'undefined') {
+            this.setNickname(obj.nickname)
+        }
+
+        if (typeof obj.color !== 'undefined') {
+            this.setColor(obj.color)
+        }
+    }
+
+    toJSON() {
+        return {
+            id: this.Id(),
+            color: this.getColor(),
+            nickname: this.getNickname(),
+            pos: this.getPos(),
+        };
     }
 }
