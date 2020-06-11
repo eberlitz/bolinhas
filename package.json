@@ -4,6 +4,7 @@
   "description": "",
   "private": true,
   "scripts": {
+    "postinstall": "npm run build",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack --config webpack.prod.js",
     "start": "node server.js"
