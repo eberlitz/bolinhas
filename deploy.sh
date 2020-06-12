@@ -12,6 +12,7 @@ NODE_ENV=production npm prune --only=prod --production
 
 echo 'Tracking files'
 git add -A .
+git add -A dist -f
 echo 'Commiting files'
 git commit -a -m 'azure update'
 echo 'Pushing files into azure branch'
