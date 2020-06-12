@@ -63,7 +63,7 @@ async function init() {
         socket.emit('join', room, myNode.toJSON());
     })
 
-    socket.on('update', (p: ModelNodeJSON) => {
+    const updatePlayer = (p: ModelNodeJSON) => {
         // console.log('update', p)
         let n = model.GetNode(p.id);
         if (!n) {
@@ -72,7 +72,18 @@ async function init() {
             model.Add(n)
         }
         n.apply(p);
+    }
+
+    socket.on('init', (data: any) => {
+        for (const key in data) {
+            if (data.hasOwnProperty(key) && key !== audioBroker.peerID) {
+                const p = data[key] as ModelNodeJSON;
+                updatePlayer(p)
+            }
+        }
     })
+
+    socket.on('update', updatePlayer)
 
     socket.on('peer_left', (id: string) => {
         console.log('left', id);

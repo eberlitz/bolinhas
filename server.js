@@ -11,6 +11,13 @@ const io = require('socket.io')(httpServer, {
   serveClient: false,
   path: '/socket',
 });
+
+// key is the room name
+// Value is the data for that room
+// To scale this needs to be in a redis
+const serverState = {};
+
+
 io.on('connection', (socket) => {
   console.log('a user connected');
   let peerId;
@@ -21,18 +28,27 @@ io.on('connection', (socket) => {
     socket.join(room, (err) => {
       if (!err) {
         rooms = [...rooms, room];
+        socket.broadcast.to(room).emit("update", player);
+        const roomState = serverState[room] = serverState[room] || {}
+        const playerState = roomState[player.id] = roomState[player.id] || {}
+        Object.assign(playerState, player)
+        socket.emit("init", roomState)
       }
     })
-    socket.broadcast.to(room).emit("update", player);
   })
 
   socket.on('update', (room, player) => {
+    const roomState = serverState[room] = serverState[room] || {}
+    const playerState = roomState[player.id] = roomState[player.id] || {}
+    Object.assign(playerState, player)
     socket.broadcast.to(room).emit('update', player);
   })
 
   socket.on('disconnect', () => {
     console.log('user disconnected');
     rooms.forEach(room => {
+      const roomState = serverState[room] = serverState[room] || {}
+      delete roomState[peerId];
       socket.broadcast.to(room).emit('peer_left', peerId);
     })
   });
