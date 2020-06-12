@@ -3,6 +3,7 @@ import * as Peer from 'peerjs';
 import { Model, ModelNode } from './model';
 import p5 = require('p5');
 
+import * as d3 from 'd3-scale';
 
 export async function requestAudio() {
     const localAudioStream = await navigator.mediaDevices
@@ -77,7 +78,12 @@ export class AudioBroker {
 
             const me = this.model.GetNode(this.model.myId);
             me.on('position', ([myX, myY]) => {
-                this.updateVolume(myX, myY, peer_audio, this.model.GetNode(call.peer));
+                const ref = this.model.GetNode(call.peer);
+                if (!ref) {
+                    console.warn(`Could not find ${call.peer} in model `, this.model.nodes.map(a => a.Id()))
+                    return
+                }
+                this.updateVolume(myX, myY, peer_audio, ref);
             })
             // remove the audio el from DOM and close the call.
             this.model.on('deleted', n => {
@@ -98,7 +104,15 @@ export class AudioBroker {
             })
 
             const otherNode = this.model.GetNode(call.peer)
+            if (!otherNode) {
+                console.warn(`Could not find ${call.peer} in model `, this.model.nodes.map(a => a.Id()))
+                return
+            }
             otherNode.on('position', ([hisX, hisY]) => {
+                if (!me) {
+                    console.warn(`Could not find myself in model `, this.model.nodes.map(a => a.Id()))
+                    return
+                }
                 this.updateVolume(hisX, hisY, peer_audio, me);
             })
         });
@@ -117,7 +131,11 @@ export class AudioBroker {
         his.set(x, y);
 
         const dist = my.dist(his);
-        peer_audio.volume = Math.max(Math.min(map(dist, 0, 400, 1, 0), 1), 0);
+
+        const scale = d3.scalePow().exponent(0.36).domain([0, 400]).range([1, 0]);
+        peer_audio.volume = scale(Math.max(Math.min(dist, 400), 0));
+
+        // peer_audio.volume = Math.max(Math.min(map(dist, 0, 400, 1, 0), 1), 0);
         console.log("volume", peer_audio.volume);
     }
 }
