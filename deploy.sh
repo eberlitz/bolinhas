@@ -6,7 +6,7 @@ echo 'Created and Checked out azure branch'
 git reset --hard origin/master
 
 npm i
-npm run build
+npm run build:prod
 NODE_ENV=production npm i --only=prod --production
 NODE_ENV=production npm prune --only=prod --production
 
