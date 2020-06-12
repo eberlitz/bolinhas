@@ -69,7 +69,7 @@ export class World {
 
     private createPlayer() {
         const pos = this.p.createVector(200, 200);
-        const radius = 20;
+        const radius = 10;
         const friction = 0.1;
         const maxSpeed = 10;
         return new Player(this.p, radius, pos, { debug: this.debug, friction, maxSpeed });

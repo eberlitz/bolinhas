@@ -64,10 +64,11 @@ async function init() {
     })
 
     socket.on('update', (p: ModelNodeJSON) => {
-        console.log('update', p)
+        // console.log('update', p)
         let n = model.GetNode(p.id);
         if (!n) {
             n = new ModelNode(p.id)
+            console.log('receiving other node', p.id)
             model.Add(n)
         }
         n.apply(p);
