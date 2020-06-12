@@ -1,6 +1,6 @@
 import 'webrtc-adapter';
 import * as Peer from 'peerjs';
-import { Model, ModelNode } from './model';
+import { Model, ModelNode, Vec2 } from './model';
 import p5 = require('p5');
 
 import * as d3 from 'd3-scale';
@@ -77,22 +77,33 @@ export class AudioBroker {
             document.body.appendChild(peer_audio)
 
             const me = this.model.GetNode(this.model.myId);
-            me.on('position', ([myX, myY]) => {
+
+            const listeners: Array<() => void> = [];
+            const dispose = () => listeners.splice(0).forEach(d => d());
+
+            const onMyPositionChange = ([myX, myY]: Vec2) => {
                 const ref = this.model.GetNode(call.peer);
                 if (!ref) {
                     console.warn(`Could not find ${call.peer} in model `, this.model.nodes.map(a => a.Id()))
                     return
                 }
                 this.updateVolume(myX, myY, peer_audio, ref);
-            })
-            // remove the audio el from DOM and close the call.
-            this.model.on('deleted', n => {
+            }
+            const removeIfNodeDeleted = (n: ModelNode) => {
                 if (n.Id() === call.peer) {
+                    dispose();
                     console.log("Closing call with", call.peer)
                     call.close();
                     peer_audio.parentElement && peer_audio.parentElement.removeChild(peer_audio)
                 }
-            })
+            }
+
+            me.addListener('position', onMyPositionChange)
+            listeners.push(() => me.removeListener('position', onMyPositionChange))
+
+            // remove the audio el from DOM and close the call.
+            this.model.addListener('deleted', removeIfNodeDeleted)
+            listeners.push(() => this.model.removeListener('deleted', removeIfNodeDeleted))
 
             call.on('close', () => {
                 console.log('call closed, removing audio el')
@@ -101,6 +112,7 @@ export class AudioBroker {
                     this.model.Delete(n);
                 }
                 peer_audio.parentElement && peer_audio.parentElement.removeChild(peer_audio)
+                dispose();
             })
 
             const otherNode = this.model.GetNode(call.peer)
@@ -108,13 +120,17 @@ export class AudioBroker {
                 console.warn(`Could not find ${call.peer} in model `, this.model.nodes.map(a => a.Id()))
                 return
             }
-            otherNode.on('position', ([hisX, hisY]) => {
+            const onOtherNodePositionChange = ([hisX, hisY]: Vec2) => {
                 if (!me) {
                     console.warn(`Could not find myself in model `, this.model.nodes.map(a => a.Id()))
                     return
                 }
                 this.updateVolume(hisX, hisY, peer_audio, me);
-            })
+            };
+
+            otherNode.addListener('position', onOtherNodePositionChange)
+            listeners.push(() => otherNode.removeListener('position', onOtherNodePositionChange))
+
         });
 
         call.on('error', function (err) { console.log(err) });
