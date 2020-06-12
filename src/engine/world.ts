@@ -1,7 +1,7 @@
 import *  as p5 from "p5";
 import { Player } from "./player";
 import { KeyboardController } from "./keyboard-control";
-import { Model } from "../model";
+import { Model, Vec2 } from "../model";
 
 export class World {
     mainPlayer: Player;
@@ -17,38 +17,43 @@ export class World {
 
 
 
+        const listeners: Array<() => void> = [];
 
-        // let p5Player = this.players[p.peerId];
-        // if (!p5Player) {
-        //     this.players[p.peerId] = p5Player = this.onNewPlayer(p.peerId)
-        // }
-        // p5Player.pos.set(p.pos[0], p.pos[1]);
+
+
 
         playerProvider.on('added', (n) => {
             const player = this.createPlayer();
             player.node = n;
 
+            const updatePlayerColor = (color: string) => player.color = p.color(color || '');
+            const updatePlayerPos = (pos: Vec2) => player.pos.set(pos[0], pos[1]);
+            updatePlayerColor(n.getColor())
+            n.on('color', updatePlayerColor);
             // Is my player?
             if (playerProvider.myId === n.Id()) {
                 this.mainPlayer = player;
                 this.mainController.attach(player);
             } else {
-                n.on('position', pos => {
-                    player.pos.set(pos[0], pos[1])
-                })
-                // TODO: needs to remove this listened on removal
+                n.on('position', updatePlayerPos)
             }
+            
+            n.once('removed', () => {
+                n.removeListener('color', updatePlayerColor);
+                n.removeListener('position', updatePlayerPos)
+                // delete the P5 player
+                let idx = this.players.indexOf(player);
+                if (idx != -1) {
+                    this.players.splice(idx, 1);
+                }
+            })
+
+
+
 
             this.players.push(player);
         })
 
-        playerProvider.on('deleted', (n) => {
-            const player = this.players.filter(a => a.node.Id() === n.Id())[0]
-            let idx = this.players.indexOf(player);
-            if (idx != -1) {
-                this.players.splice(idx, 1);
-            }
-        })
 
     }
 
@@ -69,20 +74,20 @@ export class World {
 
     private createPlayer() {
         const pos = this.p.createVector(200, 200);
-        const radius = 10;
+        const radius = 6;
         const friction = 0.1;
-        const maxSpeed = 10;
+        const maxSpeed = 4;
         return new Player(this.p, radius, pos, { debug: this.debug, friction, maxSpeed });
     }
 
     draw() {
         this.p.background(0, 0, 200);
-        if (this.mainPlayer){
+        if (this.mainPlayer) {
             this.centerOn(this.mainPlayer.pos);
         }
         this.mainController.update();
         this.staticObjs.forEach(obj => {
-            this.p.square(obj.x, obj.y, 10)
+            this.p.square(obj.x, obj.y, 4)
         })
         for (const i in this.players) {
             this.players[i].update();

@@ -54,6 +54,7 @@ async function init() {
         const peerId = audioBroker.peerID;
         console.log('My peer ID is: ' + peerId);
         const myNode = new ModelNode(peerId);
+        myNode.setColor(randomColor(100))
         myNode.on('updated', throttle((n: ModelNode) => {
             // emit updates to the socket.io for any updates on my node.
             socket.emit('update', room, n.toJSON())
@@ -92,7 +93,15 @@ async function init() {
     })
 }
 
-
+function randomColor(brightness: number) {
+    function randomChannel(brightness: number) {
+        var r = 255 - brightness;
+        var n = 0 | ((Math.random() * r) + brightness);
+        var s = n.toString(16);
+        return (s.length == 1) ? '0' + s : s;
+    }
+    return '#' + randomChannel(brightness) + randomChannel(brightness) + randomChannel(brightness);
+}
 
 function throttle(func: Function, limit: number) {
     let inThrottle = false;

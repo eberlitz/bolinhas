@@ -5,11 +5,7 @@ import { Physics } from "./physics";
 
 
 export class CircularBody extends Physics {
-	color: { r: number; g: number; b: number; a?: number; } = {
-		r: 255,
-		g: 255,
-		b: 255,
-	};
+	color: p5.Color;
 	constructor(public p: p5, public radius: number, ...args: any[]) {
 		super(p, ...args);
 	}
@@ -37,12 +33,8 @@ export class CircularBody extends Physics {
 		}
 	}
 
-	setColor(color: { r: number, g: number, b: number, a?: number }) {
-		this.color = color;
-	}
-
 	draw() {
-		this.p.fill(this.color.r, this.color.g, this.color.b, this.color.a);
+		this.p.fill(this.color);
 		this.p.ellipse(this.pos.x, this.pos.y, this.radius * 2, this.radius * 2);
 
         if(this.options.debug){

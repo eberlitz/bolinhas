@@ -24,6 +24,7 @@ export class Model extends EventEmitter {
         if (idx != -1) {
             this.nodes.splice(idx, 1)
             delete this.nodesMap[n.Id()];
+            n.emit('removed', n)
             this.emit('deleted', n)
             return true;
         }
@@ -45,14 +46,15 @@ export type Vec2 = [number, number];
 export declare interface ModelNode {
     on(event: 'position', listener: (n: Vec2) => void): this;
     on(event: 'nickname', listener: (n: string) => void): this;
-    on(event: 'color', listener: (n: number) => void): this;
+    on(event: 'color', listener: (n: string) => void): this;
+    on(event: 'removed', listener: (n: ModelNode) => void): this;
     on(event: 'updated', listener: (n: ModelNode) => void): this;
     on(event: string, listener: Function): this;
 }
 
 export class ModelNode extends EventEmitter {
     private nickname: string;
-    private color: number;
+    private color: string;
     private pos: Vec2 = [0, 0];
 
     constructor(private id: string) {
@@ -73,15 +75,15 @@ export class ModelNode extends EventEmitter {
         }
     }
 
-    setNickname(nickname: any) {
+    setNickname(nickname: string) {
         this.nickname = nickname;
-        this.emit("nickname", this.pos)
+        this.emit("nickname", this.nickname)
         this.emit("updated", this)
     }
 
-    setColor(color: any) {
+    setColor(color: string) {
         this.color = color;
-        this.emit("color", this.pos)
+        this.emit("color", this.color)
         this.emit("updated", this)
     }
 
@@ -123,7 +125,7 @@ export class ModelNode extends EventEmitter {
 
 export interface ModelNodeJSON {
     id: string;
-    color: number;
+    color: string;
     nickname: string;
     pos: Vec2;
 }
