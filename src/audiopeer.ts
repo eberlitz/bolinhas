@@ -14,6 +14,99 @@ export async function requestAudio() {
     return localAudioStream;
 }
 
+
+import EventEmitter = require('events');
+
+
+const enum OperationType {
+    ADD_TO_NETWORK,
+    LOAD,
+    DATA,
+    DELETE_TEXT,
+    INSERT_TEXT,
+    UPDATE_CURSOR_OFFSET,
+    UPDATE_SELECTION
+}
+
+export interface LoadOperation {
+    type: OperationType.LOAD;
+}
+
+export interface DataOperation {
+    type: OperationType.DATA;
+    data: any;
+    net: string[];
+}
+
+export interface AddToNetworkOperation {
+    type: OperationType.ADD_TO_NETWORK;
+    peer: string;
+}
+
+type Operation = LoadOperation | DataOperation | AddToNetworkOperation;
+
+
+export declare interface ModelP2P<T> {
+    on(event: 'data', listener: (n: any) => void): this;
+    on(event: string, listener: Function): this;
+}
+
+export class ModelP2P<T> extends EventEmitter {
+    state: T;
+    private networkMap: { [peerID: string]: Peer.DataConnection } = {};
+
+    constructor(
+        private peer: Peer
+    ) {
+        super();
+        // peer.on('open', function (id) {})
+        peer.on('connection', (conn) => {
+            console.log(`<== receive data connection stream from ${conn.peer}`);
+            this.attachOnData(conn)
+        })
+    }
+
+    broadcast(data: any) {
+        for (const k in this.networkMap) {
+            this.networkMap[k].send(data)
+        }
+    }
+
+    connectTo(peerID: string) {
+        const conn = this.peer.connect(peerID);
+        this.attachOnData(conn)
+    }
+
+    private attachOnData(conn: Peer.DataConnection) {
+        // add the connection to the network
+        this.networkMap[conn.peer] = conn;
+        // conn.on('open', () => { });
+        conn.on('data', (data) => this.onData(data))
+        conn.on('error', (err) => {
+            console.error(`error from data connection of ${conn.peer}`, err);
+        })
+        conn.on('close', () => {
+            // Remove DataConnection from network
+            delete this.networkMap[conn.peer]
+        });
+    }
+
+    private onData(d: Operation | Operation[]) {
+        console.log(`received data:`, d);
+        var ops = Array.isArray(d) ? d : [d];
+        for (const operation of ops) {
+            switch (operation) {
+                default:
+                    this.emit('data', operation);
+                    break
+            }
+        }
+    }
+}
+
+
+
+
 export function setupPeerjs(iceServers: any[], localStrem: MediaStream, model: Model): Promise<AudioBroker> {
     return new Promise((resolve, reject) => {
         const peer = new (Peer as any).default({
