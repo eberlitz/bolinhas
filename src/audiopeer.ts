@@ -37,31 +37,47 @@ export function setupPeerjs(iceServers: any[], localStrem: MediaStream, model: M
 
 export class AudioBroker {
     public peerID: string;
+    private currentAudioCalls: Set<string> = new Set();
 
     constructor(private peer: Peer, public localStrem: MediaStream, private model: Model) {
         peer.on('call', async (call) => {
+            if (this.currentAudioCalls.has(call.peer)) {
+                // ignore if there is already a call to that peer;
+                console.warn("There is already a audio call to peer " + call.peer);
+                return;
+            }
+            this.currentAudioCalls.add(call.peer);
+
             console.log('receiving call from ', call.peer)
             // Answer the call, providing our mediaStream
             call.answer(this.localStrem);
             // get the media stream of the other peer 
-            this.attachOnStream(call)
+            this.attachOnStream(call, "from_receiving_call")
         });
         this.peerID = peer.id
     }
 
     public async makeAudioCall(peer_id: string) {
+        if (this.currentAudioCalls.has(peer_id)) {
+            // ignore if there is already a call to that peer;
+            console.warn("There is already a audio call to peer " + peer_id);
+            return;
+        }
+        this.currentAudioCalls.add(peer_id);
+
+        console.log(`calling ${peer_id}...`)
         const call = this.peer.call(peer_id, this.localStrem);
-        this.attachOnStream(call)
+        this.attachOnStream(call, "from_make_audio_call")
         return call
     }
 
-
-
-
-    private attachOnStream(call: Peer.MediaConnection) {
+    private attachOnStream(call: Peer.MediaConnection, msg: string) {
+        call.on('close', () => {
+            this.currentAudioCalls.delete(call.peer);
+        })
         // get the media stream of the other peer 
         call.on('stream', (stream) => {
-            console.log('receiving stream from ', call.peer)
+            console.log(msg, 'receiving stream from ', call.peer)
             const peer_audio = document.createElement("audio") as HTMLAudioElement;
             // Older browsers may not have srcObject
             if ("srcObject" in peer_audio as any) {
@@ -152,7 +168,7 @@ export class AudioBroker {
         peer_audio.volume = scale(Math.max(Math.min(dist, 400), 0));
 
         // peer_audio.volume = Math.max(Math.min(map(dist, 0, 400, 1, 0), 1), 0);
-        console.log("volume", peer_audio.volume);
+        // console.log("volume", peer_audio.volume);
     }
 }
 

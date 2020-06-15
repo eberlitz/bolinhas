@@ -43,12 +43,7 @@ async function init() {
 
     p5init(model);
 
-    model.on('added', (n) => {
-        // Make audio call to anyone else other than me
-        if (n.Id() != audioBroker.peerID) {
-            audioBroker.makeAudioCall(n.Id())
-        }
-    })
+
 
     socket.on('connect', () => {
         const peerId = audioBroker.peerID;
@@ -76,15 +71,30 @@ async function init() {
     }
 
     socket.on('init', (data: any) => {
+        console.log('received "init"');
+
         for (const key in data) {
             if (data.hasOwnProperty(key) && key !== audioBroker.peerID) {
                 const p = data[key] as ModelNodeJSON;
+                console.log('[init]: updating player ' + p.id)
                 updatePlayer(p)
             }
         }
+
+        // Only adding the option to make calls here, makes easy to create calls, only on updates.
+        // So newly added nodes, would only receive calls.
+        model.on('added', (n) => {
+            // Make audio call to anyone else other than me
+            if (n.Id() != audioBroker.peerID) {
+                audioBroker.makeAudioCall(n.Id())
+            }
+        })
     })
 
-    socket.on('update', updatePlayer)
+    socket.on('update', (p: any) => {
+        console.log('received "update", updating player ' + p.id)
+        updatePlayer(p);
+    })
 
     socket.on('peer_left', (id: string) => {
         console.log('left', id);
