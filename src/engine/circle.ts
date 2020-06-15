@@ -37,11 +37,10 @@ export class CircularBody extends Physics {
 		this.p.fill(this.color);
 		this.p.ellipse(this.pos.x, this.pos.y, this.radius * 2, this.radius * 2);
 
-        if(this.options.debug){
-            let vel = this.vel.x + '; ' + this.vel.y
-            this.p.fill(50);
-            this.p.text(vel, 10, 10, 70, 80);
-
-        }
+		if (this.options.debug) {
+			const pos = this.pos.x.toFixed(2) + '; ' + this.pos.y.toFixed(2);
+			this.p.fill(50);
+			this.p.text(pos, this.pos.x, this.pos.y, this.pos.x + 300, this.pos.y + 300);
+		}
 	}
 }

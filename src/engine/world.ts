@@ -6,21 +6,11 @@ import { Model, Vec2 } from "../model";
 export class World {
     mainPlayer: Player;
     size: number[];
-    debug = false;
-    staticObjs: p5.Vector[];
+    debug = true;
     mainController = new KeyboardController();
     players: Player[] = [];
 
     constructor(private p: p5, private playerProvider: Model) {
-        this.staticObjs = []
-        this.createBackgroundObjects();
-
-
-
-        const listeners: Array<() => void> = [];
-
-
-
 
         playerProvider.on('added', (n) => {
             const player = this.createPlayer();
@@ -37,7 +27,7 @@ export class World {
             } else {
                 n.on('position', updatePlayerPos)
             }
-            
+
             n.once('removed', () => {
                 n.removeListener('color', updatePlayerColor);
                 n.removeListener('position', updatePlayerPos)
@@ -47,33 +37,16 @@ export class World {
                     this.players.splice(idx, 1);
                 }
             })
-
-
-
-
             this.players.push(player);
         })
-
-
     }
-
-    private createBackgroundObjects() {
-        for (let i = 0; i < 1000; i++) {
-            this.staticObjs.push(
-                this.p.createVector(this.p.random(-5000, 5000), this.p.random(-1000, 1000))
-            );
-        }
-    }
-
-
 
     setup(size: number[]) {
         this.size = size;
-
     }
 
     private createPlayer() {
-        const pos = this.p.createVector(200, 200);
+        const pos = this.p.createVector(0, 0);
         const radius = 6;
         const friction = 0.1;
         const maxSpeed = 4;
@@ -81,14 +54,24 @@ export class World {
     }
 
     draw() {
-        this.p.background(0, 0, 200);
+        this.p.background(250, 250, 245);
         if (this.mainPlayer) {
             this.centerOn(this.mainPlayer.pos);
         }
         this.mainController.update();
-        this.staticObjs.forEach(obj => {
-            this.p.square(obj.x, obj.y, 4)
-        })
+
+        // draw background
+        const size = 1000;
+        const gridSize = 25;
+        const lightBlue = this.p.color(30, 139, 195);
+        this.p.noStroke();
+        for (var i = -size; i <= size; i += gridSize) {
+            this.p.stroke(lightBlue);
+            this.p.line(i, -size, i, size);
+            this.p.line(-size, i, size, i);
+        }
+        this.p.noStroke();
+
         for (const i in this.players) {
             this.players[i].update();
         }
