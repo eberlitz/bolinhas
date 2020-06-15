@@ -6,7 +6,7 @@ import { Model, Vec2 } from "../model";
 export class World {
     mainPlayer: Player;
     size: number[];
-    debug = true;
+    debug = false;
     mainController = new KeyboardController();
     players: Player[] = [];
 
