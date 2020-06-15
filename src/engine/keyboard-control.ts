@@ -10,22 +10,25 @@ interface IControllerSetup {
     LEFT: number;
 }
 enum keys {
-    UP, LEFT, RIGHT, DOWN
+    UP,
+    LEFT,
+    RIGHT,
+    DOWN,
 }
 
 const wasd = {
     UP: 87,
     RIGHT: 68,
     DOWN: 83,
-    LEFT: 65
-}
+    LEFT: 65,
+};
 
 const arrows = {
     UP: 38,
     RIGHT: 39,
     DOWN: 40,
-    LEFT: 37
-}
+    LEFT: 37,
+};
 
 export class KeyboardController {
     target?: Player;
@@ -33,33 +36,45 @@ export class KeyboardController {
     controllerSetup: IControllerSetup = wasd;
     attach(target: Player) {
         this.target = target;
-        window.addEventListener('keydown', this.onKeyDown);
-        window.addEventListener('keyup', this.onKeyUp);
+        window.addEventListener("keydown", this.onKeyDown);
+        window.addEventListener("keyup", this.onKeyUp);
     }
 
     dettach() {
         this.target = undefined;
-        window.removeEventListener('keydown', this.onKeyDown);
-        window.removeEventListener('keyup', this.onKeyUp);
+        window.removeEventListener("keydown", this.onKeyDown);
+        window.removeEventListener("keyup", this.onKeyUp);
     }
 
     onKeyDown = (event: KeyboardEvent) => {
         switch (event.keyCode) {
             case this.controllerSetup.LEFT:
-                this.executionPipeline.set(keys.LEFT, this.generateForceFn(-1, 0));
+                this.executionPipeline.set(
+                    keys.LEFT,
+                    this.generateForceFn(-1, 0)
+                );
                 break;
             case this.controllerSetup.UP:
-                this.executionPipeline.set(keys.UP, this.generateForceFn(0, -1));
+                this.executionPipeline.set(
+                    keys.UP,
+                    this.generateForceFn(0, -1)
+                );
                 break;
             case this.controllerSetup.RIGHT:
-                this.executionPipeline.set(keys.RIGHT, this.generateForceFn(1, 0));
+                this.executionPipeline.set(
+                    keys.RIGHT,
+                    this.generateForceFn(1, 0)
+                );
                 break;
             case this.controllerSetup.DOWN:
-                this.executionPipeline.set(keys.DOWN, this.generateForceFn(0, 1));
+                this.executionPipeline.set(
+                    keys.DOWN,
+                    this.generateForceFn(0, 1)
+                );
                 break;
         }
         // this.target.updateRemote && this.target.updateRemote();
-    }
+    };
 
     onKeyUp = (event: KeyboardEvent) => {
         switch (event.keyCode) {
@@ -78,19 +93,18 @@ export class KeyboardController {
         }
 
         // this.target.updateRemote && this.target.updateRemote();
-    }
+    };
     generateForceFn(x: number, y: number) {
         return () => {
-            const force = new p5.Vector()
-            force.set(x, y)
+            const force = new p5.Vector();
+            force.set(x, y);
             this.target.applyForce(force);
-        }
+        };
     }
 
-
     update() {
-        this.executionPipeline.forEach(fn => {
+        this.executionPipeline.forEach((fn) => {
             fn();
-        })
+        });
     }
 }

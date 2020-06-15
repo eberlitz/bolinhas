@@ -1,9 +1,8 @@
-
-import EventEmitter = require('events');
+import EventEmitter = require("events");
 
 export declare interface Model {
-    on(event: 'added', listener: (n: ModelNode) => void): this;
-    on(event: 'deleted', listener: (n: ModelNode) => void): this;
+    on(event: "added", listener: (n: ModelNode) => void): this;
+    on(event: "deleted", listener: (n: ModelNode) => void): this;
     on(event: string, listener: Function): this;
 }
 export class Model extends EventEmitter {
@@ -14,21 +13,21 @@ export class Model extends EventEmitter {
     public myId?: string;
 
     Add(n: ModelNode) {
-        this.nodes.push(n)
+        this.nodes.push(n);
         this.nodesMap[n.Id()] = n;
-        this.emit('added', n)
+        this.emit("added", n);
     }
 
     Delete(n: ModelNode): boolean {
         const idx = this.nodes.indexOf(n);
         if (idx != -1) {
-            this.nodes.splice(idx, 1)
+            this.nodes.splice(idx, 1);
             delete this.nodesMap[n.Id()];
-            n.emit('removed', n)
-            this.emit('deleted', n)
+            n.emit("removed", n);
+            this.emit("deleted", n);
             return true;
         }
-        return false
+        return false;
     }
 
     HasNode(id: string) {
@@ -42,13 +41,12 @@ export class Model extends EventEmitter {
 
 export type Vec2 = [number, number];
 
-
 export declare interface ModelNode {
-    on(event: 'position', listener: (n: Vec2) => void): this;
-    on(event: 'nickname', listener: (n: string) => void): this;
-    on(event: 'color', listener: (n: string) => void): this;
-    on(event: 'removed', listener: (n: ModelNode) => void): this;
-    on(event: 'updated', listener: (n: ModelNode) => void): this;
+    on(event: "position", listener: (n: Vec2) => void): this;
+    on(event: "nickname", listener: (n: string) => void): this;
+    on(event: "color", listener: (n: string) => void): this;
+    on(event: "removed", listener: (n: ModelNode) => void): this;
+    on(event: "updated", listener: (n: ModelNode) => void): this;
     on(event: string, listener: Function): this;
 }
 
@@ -70,21 +68,21 @@ export class ModelNode extends EventEmitter {
         let [x, y] = pos;
         if (oldX !== x || oldY !== y) {
             this.pos = pos;
-            this.emit("position", this.pos)
-            this.emit("updated", this)
+            this.emit("position", this.pos);
+            this.emit("updated", this);
         }
     }
 
     setNickname(nickname: string) {
         this.nickname = nickname;
-        this.emit("nickname", this.nickname)
-        this.emit("updated", this)
+        this.emit("nickname", this.nickname);
+        this.emit("updated", this);
     }
 
     setColor(color: string) {
         this.color = color;
-        this.emit("color", this.color)
-        this.emit("updated", this)
+        this.emit("color", this.color);
+        this.emit("updated", this);
     }
 
     getPos(): Vec2 {
@@ -100,16 +98,16 @@ export class ModelNode extends EventEmitter {
     }
 
     apply(obj: any) {
-        if (typeof obj.pos !== 'undefined') {
-            this.setPos(obj.pos)
+        if (typeof obj.pos !== "undefined") {
+            this.setPos(obj.pos);
         }
 
-        if (typeof obj.nickname !== 'undefined') {
-            this.setNickname(obj.nickname)
+        if (typeof obj.nickname !== "undefined") {
+            this.setNickname(obj.nickname);
         }
 
-        if (typeof obj.color !== 'undefined') {
-            this.setColor(obj.color)
+        if (typeof obj.color !== "undefined") {
+            this.setColor(obj.color);
         }
     }
 

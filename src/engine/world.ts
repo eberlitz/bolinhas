@@ -1,4 +1,4 @@
-import *  as p5 from "p5";
+import * as p5 from "p5";
 import { Player } from "./player";
 import { KeyboardController } from "./keyboard-control";
 import { Model, Vec2 } from "../model";
@@ -11,34 +11,35 @@ export class World {
     players: Player[] = [];
 
     constructor(private p: p5, private playerProvider: Model) {
-
-        playerProvider.on('added', (n) => {
+        playerProvider.on("added", (n) => {
             const player = this.createPlayer();
             player.node = n;
 
-            const updatePlayerColor = (color: string) => player.color = p.color(color || '');
-            const updatePlayerPos = (pos: Vec2) => player.pos.set(pos[0], pos[1]);
-            updatePlayerColor(n.getColor())
-            n.on('color', updatePlayerColor);
+            const updatePlayerColor = (color: string) =>
+                (player.color = p.color(color || ""));
+            const updatePlayerPos = (pos: Vec2) =>
+                player.pos.set(pos[0], pos[1]);
+            updatePlayerColor(n.getColor());
+            n.on("color", updatePlayerColor);
             // Is my player?
             if (playerProvider.myId === n.Id()) {
                 this.mainPlayer = player;
                 this.mainController.attach(player);
             } else {
-                n.on('position', updatePlayerPos)
+                n.on("position", updatePlayerPos);
             }
 
-            n.once('removed', () => {
-                n.removeListener('color', updatePlayerColor);
-                n.removeListener('position', updatePlayerPos)
+            n.once("removed", () => {
+                n.removeListener("color", updatePlayerColor);
+                n.removeListener("position", updatePlayerPos);
                 // delete the P5 player
                 let idx = this.players.indexOf(player);
                 if (idx != -1) {
                     this.players.splice(idx, 1);
                 }
-            })
+            });
             this.players.push(player);
-        })
+        });
     }
 
     setup(size: number[]) {
@@ -50,7 +51,11 @@ export class World {
         const radius = 6;
         const friction = 0.1;
         const maxSpeed = 4;
-        return new Player(this.p, radius, pos, { debug: this.debug, friction, maxSpeed });
+        return new Player(this.p, radius, pos, {
+            debug: this.debug,
+            friction,
+            maxSpeed,
+        });
     }
 
     draw() {
@@ -78,6 +83,9 @@ export class World {
     }
 
     private centerOn(object: p5.Vector) {
-        this.p.translate(-object.x + this.size[0] / 2, -object.y + this.size[1] / 2);
+        this.p.translate(
+            -object.x + this.size[0] / 2,
+            -object.y + this.size[1] / 2
+        );
     }
 }

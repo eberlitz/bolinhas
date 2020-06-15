@@ -1,4 +1,3 @@
-
 import * as p5 from "p5";
 
 interface IPhysicsOptions {
@@ -11,7 +10,7 @@ export class Physics {
     vel: p5.Vector;
     acc: p5.Vector;
     constructor(
-        protected p:p5,
+        protected p: p5,
         // public mass: number,
         public pos = p.createVector(),
         protected options?: IPhysicsOptions
@@ -26,11 +25,10 @@ export class Physics {
         this.acc.mult(0);
         // this.checkEdges();
         this.applyFriction();
-        if(this.options.maxSpeed){
-            this.vel.limit(this.options.maxSpeed)
+        if (this.options.maxSpeed) {
+            this.vel.limit(this.options.maxSpeed);
         }
     }
-
 
     applyForce(vec: p5.Vector) {
         this.acc.add(vec);
@@ -45,7 +43,7 @@ export class Physics {
         if (!this.options.bounds) {
             return;
         }
-        const bouncingRate = 0.2
+        const bouncingRate = 0.2;
         if (this.pos.x > this.options.bounds[0]) {
             this.pos.x = this.options.bounds[0];
             this.vel.x *= -bouncingRate;
@@ -66,15 +64,18 @@ export class Physics {
     applyFriction() {
         if (this.options.friction) {
             let friction = this.vel.copy().mult(-this.options.friction);
-            let precision = 0.01
-            let force = (friction.mag() < precision) ? this.vel.copy().mult(-1) : friction;
+            let precision = 0.01;
+            let force =
+                friction.mag() < precision
+                    ? this.vel.copy().mult(-1)
+                    : friction;
             this.applyForce(force);
         }
     }
 }
 
-function vecToFixed(vector: p5.Vector){
+function vecToFixed(vector: p5.Vector) {
     let precision = 1;
-    vector.set(+vector.x.toFixed(precision), +vector.y.toFixed(precision))
+    vector.set(+vector.x.toFixed(precision), +vector.y.toFixed(precision));
     return vector;
 }
