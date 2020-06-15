@@ -54,7 +54,7 @@ export class AudioBroker {
 
     constructor(
         private peer: Peer,
-        public localStrem: MediaStream,
+        public localStream: MediaStream,
         private model: Model
     ) {
         peer.on("call", async (call) => {
@@ -69,7 +69,7 @@ export class AudioBroker {
 
             console.log("receiving call from ", call.peer);
             // Answer the call, providing our mediaStream
-            call.answer(this.localStrem);
+            call.answer(this.localStream);
             // get the media stream of the other peer
             this.attachOnStream(call, "from_receiving_call");
         });
@@ -85,7 +85,7 @@ export class AudioBroker {
         this.currentAudioCalls.add(peer_id);
 
         console.log(`calling ${peer_id}...`);
-        const call = this.peer.call(peer_id, this.localStrem);
+        const call = this.peer.call(peer_id, this.localStream);
         this.attachOnStream(call, "from_make_audio_call");
         return call;
     }
