@@ -48,32 +48,62 @@ export function setupPeerjs(
     });
 }
 
+async function screenShare() {
+    const stream = await (navigator.mediaDevices as any).getDisplayMedia({
+        video: {
+            cursor: "always",
+        },
+        audio: false,
+    });
+    return stream;
+}
+
 export class AudioBroker {
     public peerID: string;
-    private currentAudioCalls: Set<string> = new Set();
+    private currentAudioCalls: Map<string, Peer.MediaConnection> = new Map();
+    private currentLocalStream: MediaStream;
 
     constructor(
         private peer: Peer,
         public localStream: MediaStream,
         private model: Model
     ) {
+        this.currentLocalStream = localStream;
         peer.on("call", async (call) => {
-            if (this.currentAudioCalls.has(call.peer)) {
-                // ignore if there is already a call to that peer;
-                console.warn(
-                    "There is already a audio call to peer " + call.peer
-                );
-                return;
+            const oldcall = this.currentAudioCalls.get(call.peer);
+            if (!!oldcall) {
+                oldcall.close();
+                // // ignore if there is already a call to that peer;
+                // console.warn(
+                //     "There is already a audio call to peer " + call.peer
+                // );
+                // return;
             }
-            this.currentAudioCalls.add(call.peer);
+            this.currentAudioCalls.set(call.peer, call);
 
             console.log("receiving call from ", call.peer);
             // Answer the call, providing our mediaStream
-            call.answer(this.localStream);
+            call.answer(this.currentLocalStream);
             // get the media stream of the other peer
+
             this.attachOnStream(call, "from_receiving_call");
         });
         this.peerID = peer.id;
+
+        (window as any).startScreenShare = async () => {
+            const stream: MediaStream = await screenShare();
+            stream.addTrack(this.localStream.getAudioTracks()[0]);
+            this.currentLocalStream = stream;
+
+            this.currentAudioCalls.forEach((call) => {
+                if (!call) return;
+                const pID = call.peer;
+                call.close();
+                const newCall = peer.call(pID, stream);
+                this.currentAudioCalls.set(pID, newCall);
+                this.attachOnStream(newCall, "from_make_screenshare_call");
+            });
+        };
     }
 
     public async makeAudioCall(peer_id: string) {
@@ -82,24 +112,50 @@ export class AudioBroker {
             console.warn("There is already a audio call to peer " + peer_id);
             return;
         }
-        this.currentAudioCalls.add(peer_id);
+        this.currentAudioCalls.set(peer_id, null);
 
         console.log(`calling ${peer_id}...`);
-        const call = this.peer.call(peer_id, this.localStream);
+        const call = this.peer.call(peer_id, this.currentLocalStream);
+        this.currentAudioCalls.set(peer_id, call);
         this.attachOnStream(call, "from_make_audio_call");
         return call;
     }
 
     private attachOnStream(call: Peer.MediaConnection, msg: string) {
         call.on("close", () => {
-            this.currentAudioCalls.delete(call.peer);
+            !call.open && this.currentAudioCalls.delete(call.peer);
         });
+
+        let pstrem: MediaStream;
         // get the media stream of the other peer
         call.on("stream", (stream) => {
-            console.log(msg, "receiving stream from ", call.peer);
-            const peer_audio = document.createElement(
-                "audio"
+            // maybe a bug in PeerJS, but it receive this even twice, even thou its the exact same stream
+            if (pstrem === stream) {
+                return;
+            }
+            pstrem = stream;
+            
+            console.log(
+                msg,
+                "receiving stream from ",
+                call.peer,
+                stream.getTracks()
+            );
+
+            let peer_audio = document.getElementById(
+                "au_" + call.peer
             ) as HTMLAudioElement;
+            if (!peer_audio) {
+                peer_audio = document.createElement(
+                    "audio"
+                ) as HTMLAudioElement;
+                peer_audio.id = "au_" + call.peer;
+                document.body.appendChild(peer_audio);
+                peer_audio.onloadedmetadata = function (e) {
+                    console.log("now playing the audio");
+                    peer_audio.play();
+                };
+            }
             // Older browsers may not have srcObject
             if (("srcObject" in peer_audio) as any) {
                 peer_audio.srcObject = stream;
@@ -107,11 +163,33 @@ export class AudioBroker {
                 // Avoid using this in new browsers, as it is going away.
                 peer_audio.src = window.URL.createObjectURL(stream);
             }
-            peer_audio.onloadedmetadata = function (e) {
-                console.log("now playing the audio");
-                peer_audio.play();
-            };
-            document.body.appendChild(peer_audio);
+
+            let video = document.getElementById("vi_" + call.peer) as
+                | HTMLVideoElement
+                | undefined;
+            if (stream.getVideoTracks().length == 0) {
+                video &&
+                    video.parentElement &&
+                    video.parentElement.removeChild(video);
+            } else {
+                if (!video) {
+                    video = document.createElement("video") as HTMLVideoElement;
+                    video.id = "vi_" + call.peer;
+                    video.addEventListener("click", () =>
+                        video.classList.toggle("small")
+                    );
+                    document.body.appendChild(video);
+                }
+                video.autoplay = true;
+                // Older browsers may not have srcObject
+                if (("srcObject" in video) as any) {
+                    video.srcObject = stream;
+                } else {
+                    // Avoid using this in new browsers, as it is going away.
+                    video.src = window.URL.createObjectURL(stream);
+                }
+                video.volume = 0;
+            }
 
             const me = this.model.GetNode(this.model.myId);
 
@@ -136,6 +214,9 @@ export class AudioBroker {
                     call.close();
                     peer_audio.parentElement &&
                         peer_audio.parentElement.removeChild(peer_audio);
+                    video &&
+                        video.parentElement &&
+                        video.parentElement.removeChild(video);
                 }
             };
 
@@ -158,6 +239,9 @@ export class AudioBroker {
                 }
                 peer_audio.parentElement &&
                     peer_audio.parentElement.removeChild(peer_audio);
+                video &&
+                    video.parentElement &&
+                    video.parentElement.removeChild(video);
                 dispose();
             });
 
