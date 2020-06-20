@@ -65,26 +65,23 @@ export class Viewport {
                     player.position.y = pos[1];
                 }
 
-                const round = (num: number) => Math.round(num);
+                const round = (num: number) => num;
+                // const round = (num: number) => Math.round(num);
                 const [oldX, oldY] = oldPos.map(round);
                 let [x, y] = pos.map(round);
-                console.log(oldX, x);
                 if (oldX !== x || oldY !== y) {
                     oldPos = pos;
-                    for (var i = 0; i < 1 * Math.random(); i++) {
-                        this.particleSystem.spawnParticle(
-                            Object.assign({}, defaultParticleOpts, {
-                                color: new THREE.Color(player.node.getColor()),
-                                position: new THREE.Vector3(
-                                    player.position.x,
-                                    player.position.y,
-                                    0
-                                ),
-                            })
-                        );
-                    }
+                    this.particleSystem.spawnParticle(
+                        Object.assign({}, defaultParticleOpts, {
+                            color: new THREE.Color(player.node.getColor()),
+                            position: new THREE.Vector3(
+                                player.position.x,
+                                player.position.y,
+                                0
+                            ),
+                        })
+                    );
                 }
-
             };
             updatePlayerColor(n.getColor());
             n.on("color", updatePlayerColor);
@@ -118,7 +115,7 @@ export class Viewport {
             this.playerControl.update();
         }
 
-
+        
         this.particleSystem.update(this.clock.getElapsedTime());
 
         //render
@@ -300,12 +297,10 @@ function initUI(target: HTMLElement) {
 
     var size = 1000;
     var divisions = 50;
-    const ground = new THREE.GridHelper(size, divisions);
+    const ground = new THREE.GridHelper(size, divisions, new THREE.Color(0xaaaa33), new THREE.Color(0xffffff));
     ground.rotateX(THREE.MathUtils.degToRad(90));
     ground.position.set(0, 0, -1);
     scene.add(ground);
-
-    
 
     target.appendChild(renderer.domElement);
 

@@ -94,7 +94,7 @@ async function init() {
     });
 
     socket.on("update", (p: any) => {
-        console.log('received "update", updating player ' + p.id);
+        // console.log('received "update", updating player ' + p.id);
         updatePlayer(p);
     });
 
