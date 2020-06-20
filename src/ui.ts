@@ -30,7 +30,8 @@ const defaultParticleOpts = {
 let camera: THREE.OrthographicCamera;
 let scene: THREE.Scene;
 let renderer: THREE.Renderer;
-const PLAYER_SPEED = 1.0;
+const PLAYER_SPEED = 1;
+const PLAYER_FORCE = 0.4;
 
 const target = document.getElementById("viewport");
 
@@ -53,44 +54,24 @@ export class Viewport {
     setModel(model: Model) {
         model.on("added", (n) => {
             const player = new Player(n);
+            if (model.myId === n.Id()) {
+                this.playerControl = new PlayerControls(player);
+                player.add(camera);
+            }
 
             const updatePlayerColor = (color: string) => {
                 player.setColor(new THREE.Color(color));
             };
 
-            let oldPos = [0, 0];
             const updatePlayerPos = (pos: Vec2) => {
-                if (model.myId !== n.Id()) {
-                    player.position.x = pos[0];
-                    player.position.y = pos[1];
-                }
-
-                const round = (num: number) => num;
-                // const round = (num: number) => Math.round(num);
-                const [oldX, oldY] = oldPos.map(round);
-                let [x, y] = pos.map(round);
-                if (oldX !== x || oldY !== y) {
-                    oldPos = pos;
-                    this.particleSystem.spawnParticle(
-                        Object.assign({}, defaultParticleOpts, {
-                            color: new THREE.Color(player.node.getColor()),
-                            position: new THREE.Vector3(
-                                player.position.x,
-                                player.position.y,
-                                0
-                            ),
-                        })
-                    );
-                }
+                player.updatePos(pos, model.myId);
+                this.drawParticles(player, pos);
             };
             updatePlayerColor(n.getColor());
             n.on("color", updatePlayerColor);
             // Is my player?
             n.on("position", updatePlayerPos);
-            if (model.myId === n.Id()) {
-                this.playerControl = new PlayerControls(player);
-                player.add(camera);
-            }
+
 
             n.once("removed", () => {
                 n.removeListener("color", updatePlayerColor);
@@ -107,6 +88,26 @@ export class Viewport {
         });
     }
 
+    private drawParticles(player: Player, pos: Vec2) {
+        const round = (num: number) => num;
+        // const round = (num: number) => Math.round(num);
+        const [oldX, oldY] = player.oldPos.map(round);
+        let [x, y] = pos.map(round);
+        if (oldX !== x || oldY !== y) {
+            player.oldPos = pos;
+            this.particleSystem.spawnParticle(
+                Object.assign({}, defaultParticleOpts, {
+                    color: new THREE.Color(player.node.getColor()),
+                    position: new THREE.Vector3(
+                        player.position.x,
+                        player.position.y,
+                        0
+                    ),
+                })
+            );
+        }
+    }
+
     animate(time: number = 0) {
         requestAnimationFrame(this.animate.bind(this));
 
@@ -115,7 +116,7 @@ export class Viewport {
             this.playerControl.update();
         }
 
-        
+
         this.particleSystem.update(this.clock.getElapsedTime());
 
         //render
@@ -126,6 +127,9 @@ export class Viewport {
 
 class Player extends THREE.Group {
     private material!: THREE.MeshBasicMaterial;
+    public oldPos: Vec2 = [0, 0];
+    private vel: THREE.Vector3 = new THREE.Vector3(0, 0)
+    private acc: THREE.Vector3 = new THREE.Vector3(0, 0)
 
     constructor(public node: ModelNode) {
         super();
@@ -136,12 +140,49 @@ class Player extends THREE.Group {
         this.add(circle);
     }
 
+    updatePos(pos: Vec2, mainId: string) {
+        if (mainId !== this.node.Id()) {
+            this.position.x = pos[0];
+            this.position.y = pos[1];
+        }
+    }
+
     setColor(color: THREE.Color) {
         this.material.color = color;
     }
 }
 
-class PlayerControls {
+class Accelerator {
+    public position = new THREE.Vector3();
+    public velocity = new THREE.Vector3();
+    public acceleration = new THREE.Vector3();
+    private friction = 0.2;
+
+    update() {
+        this.velocity.add(this.acceleration);
+        this.position.add(this.velocity);
+        this.acceleration.multiplyScalar(0);
+        this.applyFriction();
+        if(this.velocity.length() > PLAYER_SPEED){
+            this.velocity.setLength(PLAYER_SPEED)
+        }
+    }
+
+    applyForce(force: THREE.Vector3) {
+        this.acceleration.add(force);
+    }
+
+    applyFriction() {
+        let friction = this.velocity.clone().multiplyScalar(-this.friction);
+        let precision = 0.01;
+        let force = friction.length() < precision
+                ? this.velocity.clone().multiplyScalar(-1)
+                : friction;
+        this.applyForce(force);
+    }
+}
+
+class PlayerControls extends Accelerator {
     state = {
         left: 0,
         right: 0,
@@ -154,6 +195,7 @@ class PlayerControls {
     private _onKeyDown = this.onKeyDown.bind(this);
 
     constructor(private target: Player) {
+        super();
         window.addEventListener("keyup", this._onKeyUp, false);
         window.addEventListener("keydown", this._onKeyDown, false);
     }
@@ -168,9 +210,6 @@ class PlayerControls {
         // Update Player position
         const deltaX = this.state.right - this.state.left;
         const deltaY = this.state.up - this.state.down;
-        const newX = this.target.position.x + deltaX * PLAYER_SPEED;
-        const newY = this.target.position.y + deltaY * PLAYER_SPEED;
-        const newPosition = new THREE.Vector3(newX, newY, 0);
 
         // TO lock the camera as the user moves, without adding the camera to the player group
         // camera.position.x = newPosition.x;
@@ -180,8 +219,9 @@ class PlayerControls {
         // );
         // camera.updateProjectionMatrix();
 
-        this.target.position.x = newX;
-        this.target.position.y = newY;
+        this.applyForce(new THREE.Vector3(deltaX * PLAYER_FORCE, deltaY * PLAYER_FORCE))
+        super.update();
+        this.target.position.copy(this.position)
 
         this.target.node.setPos([
             this.target.position.x,
