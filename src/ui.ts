@@ -29,7 +29,7 @@ const defaultParticleOpts = {
 
 let camera: THREE.OrthographicCamera;
 let scene: THREE.Scene;
-let renderer: THREE.Renderer;
+let renderer: THREE.WebGLRenderer;
 const PLAYER_SPEED = 1;
 const PLAYER_FORCE = 0.4;
 
@@ -301,7 +301,6 @@ function initUI(target: HTMLElement) {
     camera = new THREE.OrthographicCamera(-1, 1, 1, -1);
     renderer = new THREE.WebGLRenderer({
         alpha: true,
-        antialias: true,
     });
 
     const onWindowResize = () => {
@@ -326,7 +325,7 @@ function initUI(target: HTMLElement) {
     camera.position.set(0, 0, 500);
 
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x111);
+    scene.background = new THREE.Color(0xfafaf5);
 
     const light = new THREE.AmbientLight(0x404040);
     const directionalLight = new THREE.DirectionalLight(0xffffff);
@@ -337,7 +336,7 @@ function initUI(target: HTMLElement) {
 
     var size = 1000;
     var divisions = 50;
-    const ground = new THREE.GridHelper(size, divisions, new THREE.Color(0xaaaa33), new THREE.Color(0xffffff));
+    const ground = new THREE.GridHelper(size, divisions, new THREE.Color(0x14a0e6), new THREE.Color(0x1e8bc3));
     ground.rotateX(THREE.MathUtils.degToRad(90));
     ground.position.set(0, 0, -1);
     scene.add(ground);
