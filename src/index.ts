@@ -6,6 +6,9 @@ import { requestAudio, setupPeerjs } from "./audiopeer";
 import { p5init } from "./engine/sketch";
 import { Model, ModelNode, ModelNodeJSON } from "./model";
 
+import "./ui"
+import { viewport } from "./ui";
+
 document.addEventListener(
     "DOMContentLoaded",
     function (event) {
@@ -37,7 +40,9 @@ async function init() {
         transports: ["websocket"],
     });
 
-    p5init(model);
+    viewport.setModel(model);
+
+    // p5init(model);
 
     socket.on("connect", () => {
         const peerId = audioBroker.peerID;
