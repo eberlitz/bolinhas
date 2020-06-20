@@ -8,7 +8,7 @@ export const p5init = (pp: Model) => {
     return new p5((p: p5) => {
         const world = new World(p, pp);
         p.setup = () => {
-            const size = [800, 600];
+            const size = [p.windowWidth, p.windowHeight];
 
             p.createCanvas(p.windowWidth, p.windowHeight);
             world.setup(size);
@@ -19,7 +19,7 @@ export const p5init = (pp: Model) => {
         };
 
         p.windowResized = () => {
-            p.resizeCanvas(p.windowWidth, p.windowHeight);
+            world.resize();
         };
     }, document.getElementById("p5-container"));
 };

@@ -88,4 +88,9 @@ export class World {
             -object.y + this.size[1] / 2
         );
     }
+
+    resize(){
+        this.p.resizeCanvas(this.p.windowWidth, this.p.windowHeight);
+        this.size = [this.p.windowWidth, this.p.windowHeight];
+    }
 }
