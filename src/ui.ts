@@ -1,5 +1,5 @@
 import * as THREE from "three";
-THREE.Object3D.DefaultUp.set(0, 0, 1);
+// THREE.Object3D.DefaultUp.set(0, 0, 1);
 import * as CANNON from "cannon";
 import {
     CSS3DRenderer,
@@ -8,11 +8,32 @@ import {
 // import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { Model, ModelNode, Vec2 } from "./model";
 
+import "./lib/GPUParticleSystem";
+
+declare module "three" {
+    let GPUParticleSystem: any;
+}
+
+import particleUrl from "./textures/particle2.png";
+import perlinUrl from "./textures/perlin-512.png";
+
+const defaultParticleOpts = {
+    positionRandomness: 0.9,
+    velocity: new THREE.Vector3(),
+    velocityRandomness: 0.3,
+    color: 0xaa88ff,
+    colorRandomness: 0,
+    turbulence: 0,
+    lifetime: 4,
+    size: 20,
+    sizeRandomness: 0,
+};
+
 let world: CANNON.World;
 let camera: THREE.OrthographicCamera;
 let scene: THREE.Scene;
 let renderer: THREE.Renderer;
-let scene2: THREE.Scene, renderer2: CSS3DRenderer;
+// let scene2: THREE.Scene, renderer2: CSS3DRenderer;
 const PLAYER_SPEED = 5.0;
 
 const groundBody = new CANNON.Body({
@@ -23,7 +44,19 @@ const target = document.getElementById("viewport");
 
 export class Viewport {
     private playerControl?: PlayerControls;
-    constructor(private scene: THREE.Scene) {}
+    private clock = new THREE.Clock();
+
+    particleSystem: any;
+    tick: number = 0;
+    constructor(private scene: THREE.Scene) {
+        var textureLoader = new THREE.TextureLoader();
+        this.particleSystem = new THREE.GPUParticleSystem({
+            maxParticles: 250000,
+            particleNoiseTex: textureLoader.load(perlinUrl),
+            particleSpriteTex: textureLoader.load(particleUrl),
+        });
+        this.scene.add(this.particleSystem);
+    }
 
     setModel(model: Model) {
         model.on("added", (n) => {
@@ -32,9 +65,33 @@ export class Viewport {
             const updatePlayerColor = (color: string) => {
                 player.setColor(new THREE.Color(color));
             };
+
+            let oldPos = [0, 0];
             const updatePlayerPos = (pos: Vec2) => {
-                player.body.position.x = pos[0];
-                player.body.position.y = pos[1];
+                if (model.myId !== n.Id()) {
+                    player.body.position.x = pos[0];
+                    player.body.position.y = pos[1];
+                }
+
+                const round = (num: number) => Math.round(num);
+                const [oldX, oldY] = oldPos.map(round);
+                let [x, y] = pos.map(round);
+                if (oldX !== x || oldY !== y) {
+                    oldPos = pos;
+                    for (var i = 0; i < 1 * Math.random(); i++) {
+                        this.particleSystem.spawnParticle(
+                            Object.assign({}, defaultParticleOpts, {
+                                color: new THREE.Color(player.node.getColor()),
+                                position: new THREE.Vector3(
+                                    player.body.position.x,
+                                    player.body.position.y,
+                                    0
+                                ),
+                            })
+                        );
+                    }
+                }
+
                 // player.position.setX(pos[0]);
                 // player.position.setY(pos[1]);
                 // player.position.set(pos[0], pos[1], 0);
@@ -42,10 +99,9 @@ export class Viewport {
             updatePlayerColor(n.getColor());
             n.on("color", updatePlayerColor);
             // Is my player?
+            n.on("position", updatePlayerPos);
             if (model.myId === n.Id()) {
                 this.playerControl = new PlayerControls(player);
-            } else {
-                n.on("position", updatePlayerPos);
             }
 
             n.once("removed", () => {
@@ -73,14 +129,20 @@ export class Viewport {
         });
     }
 
-    animate() {
+    animate(time: number = 0) {
         requestAnimationFrame(this.animate.bind(this));
+        const delta = this.clock.getDelta();
+        // this.clock.elapsedTime;
+
+        this.tick += delta;
 
         if (this.playerControl) {
             this.playerControl.update();
         }
 
         this.updatePhysics();
+
+        this.particleSystem.update(this.clock.getElapsedTime());
 
         //render
         renderer.render(scene, camera);
@@ -110,6 +172,7 @@ export class Viewport {
 class Player extends THREE.Group {
     private material!: THREE.MeshBasicMaterial;
     public body!: CANNON.Body;
+
     constructor(public node: ModelNode) {
         super();
         var mass = 5,
@@ -178,11 +241,16 @@ class PlayerControls {
         this.target.body.velocity.x += deltaX * PLAYER_SPEED;
         this.target.body.velocity.y += deltaY * PLAYER_SPEED;
 
+        camera.position.x = this.target.position.x;
+        camera.position.y = this.target.position.y;
+
+        camera.lookAt(
+            new THREE.Vector3(camera.position.x, camera.position.y, 0)
+        );
+        camera.updateProjectionMatrix();
+
         // if (newPosition.length() < SPACE_RADIUS) {
-        // camera.position.x = this.target.position.x = newX;
-        // camera.position.y = this.target.position.y = newY;
-        // camera.lookAt(new THREE.Vector3(newX, newY, 0));
-        // camera.updateMatrix();
+
         // }
         if (deltaX || deltaY) {
             // playerState.directionX = deltaX;
@@ -256,13 +324,16 @@ class PlayerControls {
 }
 function initUI(target: HTMLElement) {
     camera = new THREE.OrthographicCamera(-1, 1, 1, -1);
-    renderer = new THREE.WebGLRenderer();
-    renderer2 = new CSS3DRenderer();
+    renderer = new THREE.WebGLRenderer({
+        alpha: true,
+        antialias: true,
+    });
+    // renderer2 = new CSS3DRenderer();
 
     const onWindowResize = () => {
         (renderer as any).setPixelRatio(window.devicePixelRatio);
         renderer.setSize(target.clientWidth, target.clientHeight);
-        renderer2.setSize(target.clientWidth, target.clientHeight);
+        // renderer2.setSize(target.clientWidth, target.clientHeight);
 
         var frustumSize = 500;
         const aspect = target.clientWidth / target.clientHeight;
@@ -304,7 +375,8 @@ function initUI(target: HTMLElement) {
     // world.addContactMaterial(physicsContactMaterial);
 
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xfafaf5);
+    scene.background = new THREE.Color(0x000);
+    // scene.background = new THREE.Color(0xfafaf5);
 
     // var lights = [];
     // lights[0] = new THREE.AmbientLight(0xffffff, 1);
@@ -351,8 +423,8 @@ function initUI(target: HTMLElement) {
     // scene.add(ground);
 
     target.appendChild(renderer.domElement);
-    renderer2.domElement.style.position = "absolute";
-    renderer2.domElement.style.top = "0";
+    // renderer2.domElement.style.position = "absolute";
+    // renderer2.domElement.style.top = "0";
     // target.appendChild(renderer2.domElement);
 
     // const controls = new OrbitControls(camera, renderer.domElement);
