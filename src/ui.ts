@@ -7,6 +7,7 @@ import * as THREE from "three";
 import { Model, ModelNode, Vec2 } from "./model";
 
 import "./lib/GPUParticleSystem";
+import * as d3 from "d3-scale";
 
 declare module "three" {
     let GPUParticleSystem: any;
@@ -72,12 +73,12 @@ export class Viewport {
             // Is my player?
             n.on("position", updatePlayerPos);
 
-
             n.once("removed", () => {
                 n.removeListener("color", updatePlayerColor);
                 n.removeListener("position", updatePlayerPos);
                 // delete the P5 player
                 this.scene.remove(player);
+                player.dispose();
 
                 if (model.myId === n.Id()) {
                     this.playerControl.dispose();
@@ -111,13 +112,17 @@ export class Viewport {
     animate(time: number = 0) {
         requestAnimationFrame(this.animate.bind(this));
 
-
         if (this.playerControl) {
             this.playerControl.update();
         }
 
-
         this.particleSystem.update(this.clock.getElapsedTime());
+
+        this.scene.children.forEach((obj) => {
+            if (obj instanceof Player) {
+                obj.update(time);
+            }
+        });
 
         //render
         renderer.render(scene, camera);
@@ -128,16 +133,46 @@ export class Viewport {
 class Player extends THREE.Group {
     private material!: THREE.MeshBasicMaterial;
     public oldPos: Vec2 = [0, 0];
-    private vel: THREE.Vector3 = new THREE.Vector3(0, 0)
-    private acc: THREE.Vector3 = new THREE.Vector3(0, 0)
+    private vel: THREE.Vector3 = new THREE.Vector3(0, 0);
+    private acc: THREE.Vector3 = new THREE.Vector3(0, 0);
+    analyser: THREE.AudioAnalyser;
+
+    _onMediaStream = this.onMediaStream.bind(this);
+    ripple: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial>;
 
     constructor(public node: ModelNode) {
         super();
+
+        const color = new THREE.Color(node.getColor());
         const radius = 5;
         var geometry = new THREE.SphereGeometry(radius, 32, 32);
-        this.material = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+        this.material = new THREE.MeshBasicMaterial({ color });
         var circle = new THREE.Mesh(geometry, this.material);
         this.add(circle);
+
+        this.ripple = new THREE.Mesh(
+            new THREE.SphereGeometry(radius, 32, 32),
+            new THREE.MeshBasicMaterial({
+                color,
+                transparent: true,
+                opacity: 0.5,
+            })
+        );
+        this.add(this.ripple);
+        this.ripple.position.y -= 0.001;
+
+        this.node.addListener("stream", this._onMediaStream);
+        if (this.node.mediaStream) {
+            this.onMediaStream(this.node.mediaStream);
+        }
+    }
+
+    onMediaStream(stream: MediaStream) {
+        var listener = new THREE.AudioListener();
+        var sound = new THREE.Audio(listener);
+        sound.setMediaStreamSource(stream);
+        this.analyser = new THREE.AudioAnalyser(sound, 32);
+        // this.analyser.getAverageFrequency();
     }
 
     updatePos(pos: Vec2, mainId: string) {
@@ -149,6 +184,24 @@ class Player extends THREE.Group {
 
     setColor(color: THREE.Color) {
         this.material.color = color;
+        this.ripple.material.color = color;
+    }
+
+    update(time: number) {
+        if (this.analyser) {
+            let avg = this.analyser.getAverageFrequency();
+
+            const scale = d3.scaleLinear().domain([0, 220]).range([0, 1]);
+
+            avg=scale(Math.max(Math.min(avg, 220), 0));
+
+            this.ripple.scale.x = 4 * avg;
+            this.ripple.scale.y = 4 * avg;
+        }
+    }
+
+    dispose() {
+        this.node.removeListener("stream", this._onMediaStream);
     }
 }
 
@@ -156,16 +209,16 @@ class Accelerator {
     public position = new THREE.Vector3();
     public velocity = new THREE.Vector3();
     public acceleration = new THREE.Vector3();
-    private friction = 0.2;
+    private friction = 0.04;
 
     update() {
+        this.applyFriction();
         this.velocity.add(this.acceleration);
         this.position.add(this.velocity);
-        this.acceleration.multiplyScalar(0);
-        this.applyFriction();
-        if(this.velocity.length() > PLAYER_SPEED){
-            this.velocity.setLength(PLAYER_SPEED)
+        if (this.velocity.length() > PLAYER_SPEED) {
+            this.velocity.setLength(PLAYER_SPEED);
         }
+        this.acceleration.multiplyScalar(0);
     }
 
     applyForce(force: THREE.Vector3) {
@@ -174,8 +227,9 @@ class Accelerator {
 
     applyFriction() {
         let friction = this.velocity.clone().multiplyScalar(-this.friction);
-        let precision = 0.01;
-        let force = friction.length() < precision
+        let precision = 0.005;
+        let force =
+            friction.length() < precision
                 ? this.velocity.clone().multiplyScalar(-1)
                 : friction;
         this.applyForce(force);
@@ -219,9 +273,11 @@ class PlayerControls extends Accelerator {
         // );
         // camera.updateProjectionMatrix();
 
-        this.applyForce(new THREE.Vector3(deltaX * PLAYER_FORCE, deltaY * PLAYER_FORCE))
+        const force = new THREE.Vector3(deltaX, deltaY);
+        force.setLength(PLAYER_FORCE);
+        this.applyForce(force);
         super.update();
-        this.target.position.copy(this.position)
+        this.target.position.copy(this.position);
 
         this.target.node.setPos([
             this.target.position.x,
@@ -336,7 +392,12 @@ function initUI(target: HTMLElement) {
 
     var size = 1000;
     var divisions = 50;
-    const ground = new THREE.GridHelper(size, divisions, new THREE.Color(0x14a0e6), new THREE.Color(0x1e8bc3));
+    const ground = new THREE.GridHelper(
+        size,
+        divisions,
+        new THREE.Color(0x14a0e6),
+        new THREE.Color(0x1e8bc3)
+    );
     ground.rotateX(THREE.MathUtils.degToRad(90));
     ground.position.set(0, 0, -1);
     scene.add(ground);

@@ -55,6 +55,15 @@ export class ModelNode extends EventEmitter {
     private color: string;
     private pos: Vec2 = [0, 0];
 
+    private _mediaStream?: MediaStream;
+    set mediaStream(value: MediaStream) {
+        this._mediaStream = value;
+        this.emit("stream", value);
+    }
+    get mediaStream() {
+        return this._mediaStream;
+    }
+
     constructor(private id: string) {
         super();
     }

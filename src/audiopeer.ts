@@ -134,6 +134,17 @@ export class AudioBroker {
                 return;
             }
             pstrem = stream;
+
+
+            const otherNode = this.model.GetNode(call.peer);
+            if (!otherNode) {
+                console.warn(
+                    `Could not find ${call.peer} in model `,
+                    this.model.nodes.map((a) => a.Id())
+                );
+                return;
+            }
+            otherNode.mediaStream = stream;
             
             console.log(
                 msg,
@@ -245,14 +256,7 @@ export class AudioBroker {
                 dispose();
             });
 
-            const otherNode = this.model.GetNode(call.peer);
-            if (!otherNode) {
-                console.warn(
-                    `Could not find ${call.peer} in model `,
-                    this.model.nodes.map((a) => a.Id())
-                );
-                return;
-            }
+            
             const onOtherNodePositionChange = ([hisX, hisY]: Vec2) => {
                 if (!me) {
                     console.warn(
