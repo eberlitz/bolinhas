@@ -1,12 +1,8 @@
 import "./style.scss";
 import * as io from "socket.io-client";
-import { getLocationHash } from "./helpers";
 import { requestAudio, setupPeerjs } from "./audiopeer";
-
-import { p5init } from "./engine/sketch";
 import { Model, ModelNode, ModelNodeJSON } from "./model";
-
-import "./ui"
+import "./ui";
 import { viewport } from "./ui";
 
 document.addEventListener(
@@ -18,7 +14,8 @@ document.addEventListener(
 );
 
 async function init() {
-    var { room } = getLocationHash();
+    const url = window.location.href;
+    const room = url.substring(url.lastIndexOf("/") + 1).toLowerCase();
     console.log("Room: ", room);
 
     const localAudioStream = await requestAudio();
@@ -41,8 +38,6 @@ async function init() {
     });
 
     viewport.setModel(model);
-
-    // p5init(model);
 
     socket.on("connect", () => {
         const peerId = audioBroker.peerID;

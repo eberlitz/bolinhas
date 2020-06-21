@@ -11,3 +11,11 @@ declare module "*.css" {
     const content: any;
     export default content;
 }
+
+declare module "moniker" {
+    // const content: {
+    //     choose: () => string;
+    // };
+    const content: any;
+    export default content;
+}

@@ -12,6 +12,7 @@ module.exports = {
   },
   entry: {
     app: "./src/index.ts",
+    landing: "./src/landing/index.ts"
   },
   output: {
     globalObject: "self",
@@ -28,9 +29,16 @@ module.exports = {
       chunkFilename: "[id].css"
     }),
     new HtmlWebpackPlugin({
+      filename: "index.html",
       title: "bolinhas",
       template: "./src/index.html",
       chunks: ["app"]
+    }),
+    new HtmlWebpackPlugin({
+      filename: "landing.html",
+      title: "Bolinhas",
+      template: "./src/landing/landing.html",
+      chunks: ["landing"]
     })
   ],
   module: {
