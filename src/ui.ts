@@ -230,7 +230,7 @@ class Accelerator {
     public position = new THREE.Vector3();
     public velocity = new THREE.Vector3();
     public acceleration = new THREE.Vector3();
-    private friction = 0.04;
+    private friction = 0.06;
 
     update() {
         this.applyFriction();
@@ -293,10 +293,10 @@ class PlayerControls extends Accelerator {
         //     new THREE.Vector3(camera.position.x, camera.position.y, 0)
         // );
         // camera.updateProjectionMatrix();
+        const force = new THREE.Vector3(deltaX, deltaY)
+        force.setLength(PLAYER_FORCE)
 
-        const force = new THREE.Vector3(deltaX, deltaY);
-        force.setLength(PLAYER_FORCE);
-        this.applyForce(force);
+        this.applyForce(force)
         super.update();
         this.target.position.copy(this.position);
 
@@ -312,7 +312,10 @@ class PlayerControls extends Accelerator {
     }
 
     onKeyDown(evt: KeyboardEvent) {
-        let prevent = true;
+        let prevent = false;
+        if(evt.target !== target){
+            return;
+        }
         switch (evt.key) {
             case "d":
             case "ArrowRight":

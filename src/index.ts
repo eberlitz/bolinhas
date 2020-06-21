@@ -23,6 +23,7 @@ async function init() {
     const iceServers = await fetch("/ice").then((response) => response.json());
 
     var model = new Model();
+    initMenu(model);
 
     const audioBroker = await setupPeerjs(iceServers, localAudioStream, model);
     console.log("starting");
@@ -44,6 +45,7 @@ async function init() {
         console.log("My peer ID is: " + peerId);
         const myNode = new ModelNode(peerId);
         myNode.setColor(randomColor(100));
+        myNode.setNickname(myNode.Id().slice(0, 5))
         myNode.on(
             "updated",
             throttle((n: ModelNode) => {
@@ -62,9 +64,11 @@ async function init() {
         if (!n) {
             n = new ModelNode(p.id);
             console.log("receiving other node", p.id);
+            n.apply(p);
             model.Add(n);
+        } else {
+            n.apply(p);
         }
-        n.apply(p);
     };
 
     socket.on("init", (data: any) => {
@@ -100,6 +104,18 @@ async function init() {
     });
 }
 
+function initMenu(model: Model) {
+    model.on("added", (node) => {
+        if(node.Id() === model.myId){
+            addMeToMenu(node);
+        } else {
+            addOtherToMenu(node)
+            node.on("updated", updateMenu);
+        }
+    });
+    model.on("deleted", removeFromMenu);
+}
+
 function randomColor(brightness: number) {
     function randomChannel(brightness: number) {
         var r = 255 - brightness;
@@ -126,4 +142,60 @@ function throttle(func: Function, limit: number) {
             setTimeout(() => (inThrottle = false), limit);
         }
     };
+}
+
+function addMeToMenu(node: ModelNode){
+    const htmlPlayersContainer = document.getElementById("me");
+    const playerContainer = document.createElement('div');
+    playerContainer.id = 'pi-'+node.Id();
+    playerContainer.classList.add("main-player-item")
+    const playerColor = document.createElement('span');
+    playerColor.classList.add('color-indicator');
+    const playerName = document.createElement('input');
+    playerName.type = "text";
+    playerName.value = node.getNickname();
+    playerName.addEventListener('change',() => {
+        node.setNickname(playerName.value);
+    })
+    playerName.classList.add('me-list-name');
+
+    playerContainer.insertBefore(playerName, null);
+    playerContainer.insertBefore(playerColor, playerName);
+    htmlPlayersContainer.insertBefore(playerContainer, null);
+
+    const colorEl = document.querySelector(`#pi-${node.Id()} .color-indicator`) as HTMLSpanElement
+    colorEl.style.backgroundColor = node.getColor();
+}
+function addOtherToMenu(node: ModelNode){
+    const htmlPlayersContainer = document.getElementById("players");
+    const playerContainer = document.createElement('div');
+    playerContainer.id = 'pi-'+node.Id();
+    const playerColor = document.createElement('span');
+    playerColor.classList.add('color-indicator');
+    const playerName = document.createElement('span');
+    playerName.classList.add('player-list-name');
+
+    playerContainer.insertBefore(playerName, null);
+    playerContainer.insertBefore(playerColor, playerName);
+    htmlPlayersContainer.insertBefore(playerContainer, null);
+
+    updatePlayerIndicator(node.Id(), node.getNickname(), node.getColor());
+}
+
+function removeFromMenu(node: ModelNode){
+    const id = node.Id();
+    const playerEl = document.getElementById('pi-' + id);
+    playerEl.parentNode.removeChild(playerEl);
+}
+
+function updateMenu(node: ModelNode){
+    updatePlayerIndicator(node.Id(), node.getNickname(), node.getColor());
+}
+
+function updatePlayerIndicator(id: string, name: string, color: string){
+    document.getElementById('pi-' + id);
+    const playerNameEl = document.querySelector(`#pi-${id} .player-list-name`) as HTMLSpanElement
+    const colorEl = document.querySelector(`#pi-${id} .color-indicator`) as HTMLSpanElement
+    playerNameEl.innerText = name;
+    colorEl.style.backgroundColor = color;
 }
