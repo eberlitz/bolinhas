@@ -39,6 +39,7 @@ const target = document.getElementById("viewport");
 export class Viewport {
     private playerControl?: PlayerControls;
     private clock = new THREE.Clock();
+    audioListener = new THREE.AudioListener();
 
     particleSystem: any;
     tick: number = 0;
@@ -54,10 +55,11 @@ export class Viewport {
 
     setModel(model: Model) {
         model.on("added", (n) => {
-            const player = new Player(n);
+            const player = new Player(n, this.audioListener);
             if (model.myId === n.Id()) {
                 this.playerControl = new PlayerControls(player);
                 player.add(camera);
+                player.add(this.audioListener);
             }
 
             const updatePlayerColor = (color: string) => {
@@ -140,7 +142,10 @@ class Player extends THREE.Group {
     _onMediaStream = this.onMediaStream.bind(this);
     ripple: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial>;
 
-    constructor(public node: ModelNode) {
+    constructor(
+        public node: ModelNode,
+        private audioListener: THREE.AudioListener
+    ) {
         super();
 
         const color = new THREE.Color(node.getColor());
@@ -168,9 +173,22 @@ class Player extends THREE.Group {
     }
 
     onMediaStream(stream: MediaStream) {
-        var listener = new THREE.AudioListener();
-        var sound = new THREE.Audio(listener);
-        sound.setMediaStreamSource(stream);
+        const audioEl = new Audio();
+        // audioEl.autoplay = true;
+        audioEl.srcObject = stream;
+
+        var sound = new THREE.PositionalAudio(this.audioListener);
+
+        var context = this.audioListener.context;
+        var source = context.createMediaStreamSource(stream);
+        sound.setNodeSource(source as any);
+
+        sound.setMaxDistance(50);
+        sound.autoplay = true;
+        // sound.setMediaStreamSource(stream);
+        sound.setRefDistance(20);
+        sound.play();
+        this.add(sound);
         this.analyser = new THREE.AudioAnalyser(sound, 32);
         // this.analyser.getAverageFrequency();
     }
@@ -180,6 +198,8 @@ class Player extends THREE.Group {
             this.position.x = pos[0];
             this.position.y = pos[1];
         }
+
+        console.log(this.position);
     }
 
     setColor(color: THREE.Color) {
@@ -190,10 +210,11 @@ class Player extends THREE.Group {
     update(time: number) {
         if (this.analyser) {
             let avg = this.analyser.getAverageFrequency();
+            console.log(avg);
 
             const scale = d3.scaleLinear().domain([0, 220]).range([0, 1]);
 
-            avg=scale(Math.max(Math.min(avg, 220), 0));
+            avg = scale(Math.max(Math.min(avg, 220), 0));
 
             this.ripple.scale.x = 4 * avg;
             this.ripple.scale.y = 4 * avg;

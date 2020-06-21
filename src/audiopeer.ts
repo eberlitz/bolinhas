@@ -144,7 +144,6 @@ export class AudioBroker {
                 );
                 return;
             }
-            otherNode.mediaStream = stream;
             
             console.log(
                 msg,
@@ -156,24 +155,28 @@ export class AudioBroker {
             let peer_audio = document.getElementById(
                 "au_" + call.peer
             ) as HTMLAudioElement;
-            if (!peer_audio) {
-                peer_audio = document.createElement(
-                    "audio"
-                ) as HTMLAudioElement;
-                peer_audio.id = "au_" + call.peer;
-                document.body.appendChild(peer_audio);
-                peer_audio.onloadedmetadata = function (e) {
-                    console.log("now playing the audio");
-                    peer_audio.play();
-                };
-            }
-            // Older browsers may not have srcObject
-            if (("srcObject" in peer_audio) as any) {
-                peer_audio.srcObject = stream;
-            } else {
-                // Avoid using this in new browsers, as it is going away.
-                peer_audio.src = window.URL.createObjectURL(stream);
-            }
+            // if (!peer_audio) {
+            //     peer_audio = document.createElement(
+            //         "audio"
+            //     ) as HTMLAudioElement;
+            //     peer_audio.id = "au_" + call.peer;
+            //     document.body.appendChild(peer_audio);
+            //     peer_audio.onloadedmetadata = function (e) {
+            //         console.log("now playing the audio");
+            //         peer_audio.play();
+            //     };
+            // }
+            // // Older browsers may not have srcObject
+            // if (("srcObject" in peer_audio) as any) {
+            //     peer_audio.srcObject = stream;
+            // } else {
+            //     // Avoid using this in new browsers, as it is going away.
+            //     peer_audio.src = window.URL.createObjectURL(stream);
+            // }
+
+
+            otherNode.mediaStream = stream;
+
 
             let video = document.getElementById("vi_" + call.peer) as
                 | HTMLVideoElement
@@ -216,14 +219,14 @@ export class AudioBroker {
                     );
                     return;
                 }
-                this.updateVolume(myX, myY, peer_audio, ref);
+                // this.updateVolume(myX, myY, peer_audio, ref);
             };
             const removeIfNodeDeleted = (n: ModelNode) => {
                 if (n.Id() === call.peer) {
                     dispose();
                     console.log("Closing call with", call.peer);
                     call.close();
-                    peer_audio.parentElement &&
+                    peer_audio && peer_audio.parentElement &&
                         peer_audio.parentElement.removeChild(peer_audio);
                     video &&
                         video.parentElement &&
@@ -248,7 +251,7 @@ export class AudioBroker {
                 if (n) {
                     this.model.Delete(n);
                 }
-                peer_audio.parentElement &&
+                peer_audio && peer_audio.parentElement &&
                     peer_audio.parentElement.removeChild(peer_audio);
                 video &&
                     video.parentElement &&
@@ -265,7 +268,7 @@ export class AudioBroker {
                     );
                     return;
                 }
-                this.updateVolume(hisX, hisY, peer_audio, me);
+                // this.updateVolume(hisX, hisY, peer_audio, me);
             };
 
             otherNode.addListener("position", onOtherNodePositionChange);
