@@ -2,8 +2,8 @@ import "./style.scss";
 import * as io from "socket.io-client";
 import { requestAudio, setupPeerjs } from "./audiopeer";
 import { Model, ModelNode, ModelNodeJSON } from "./model";
-import "./ui";
-import { viewport } from "./ui";
+// import "./engine/ui";
+import { viewport } from "./engine/ui";
 
 document.addEventListener(
     "DOMContentLoaded",
