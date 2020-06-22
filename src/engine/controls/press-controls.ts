@@ -73,8 +73,8 @@ export class PressControls extends Accelerator {
 
         if (this.force) {
             this.applyForce(this.force)
-            super.update();
         }
+        super.update();
         this.target.position.copy(this.position);
 
         this.target.node.setPos([
