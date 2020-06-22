@@ -45,7 +45,12 @@ async function init() {
         console.log("My peer ID is: " + peerId);
         const myNode = new ModelNode(peerId);
         myNode.setColor(randomColor(100));
-        myNode.setNickname(myNode.Id().slice(0, 5))
+
+        let nickname = localStorage.getItem("nickname");
+        if (!nickname) {
+            nickname = myNode.Id().slice(0, 5);
+        }
+        myNode.setNickname(nickname);
         myNode.on(
             "updated",
             throttle((n: ModelNode) => {
@@ -106,10 +111,10 @@ async function init() {
 
 function initMenu(model: Model) {
     model.on("added", (node) => {
-        if(node.Id() === model.myId){
+        if (node.Id() === model.myId) {
             addMeToMenu(node);
         } else {
-            addOtherToMenu(node)
+            addOtherToMenu(node);
             node.on("updated", updateMenu);
         }
     });
@@ -144,36 +149,40 @@ function throttle(func: Function, limit: number) {
     };
 }
 
-function addMeToMenu(node: ModelNode){
+function addMeToMenu(node: ModelNode) {
     const htmlPlayersContainer = document.getElementById("me");
-    const playerContainer = document.createElement('div');
-    playerContainer.id = 'pi-'+node.Id();
-    playerContainer.classList.add("main-player-item")
-    const playerColor = document.createElement('span');
-    playerColor.classList.add('color-indicator');
-    const playerName = document.createElement('input');
+    const playerContainer = document.createElement("div");
+    playerContainer.id = "pi-" + node.Id();
+    playerContainer.classList.add("main-player-item");
+    const playerColor = document.createElement("span");
+    playerColor.classList.add("color-indicator");
+    const playerName = document.createElement("input");
     playerName.type = "text";
     playerName.value = node.getNickname();
-    playerName.addEventListener('change',() => {
-        node.setNickname(playerName.value);
-    })
-    playerName.classList.add('me-list-name');
+    playerName.addEventListener("change", () => {
+        const nickname = playerName.value
+        node.setNickname(nickname);
+        localStorage.setItem("nickname", nickname);
+    });
+    playerName.classList.add("me-list-name");
 
     playerContainer.insertBefore(playerName, null);
     playerContainer.insertBefore(playerColor, playerName);
     htmlPlayersContainer.insertBefore(playerContainer, null);
 
-    const colorEl = document.querySelector(`#pi-${node.Id()} .color-indicator`) as HTMLSpanElement
+    const colorEl = document.querySelector(
+        `#pi-${node.Id()} .color-indicator`
+    ) as HTMLSpanElement;
     colorEl.style.backgroundColor = node.getColor();
 }
-function addOtherToMenu(node: ModelNode){
+function addOtherToMenu(node: ModelNode) {
     const htmlPlayersContainer = document.getElementById("players");
-    const playerContainer = document.createElement('div');
-    playerContainer.id = 'pi-'+node.Id();
-    const playerColor = document.createElement('span');
-    playerColor.classList.add('color-indicator');
-    const playerName = document.createElement('span');
-    playerName.classList.add('player-list-name');
+    const playerContainer = document.createElement("div");
+    playerContainer.id = "pi-" + node.Id();
+    const playerColor = document.createElement("span");
+    playerColor.classList.add("color-indicator");
+    const playerName = document.createElement("span");
+    playerName.classList.add("player-list-name");
 
     playerContainer.insertBefore(playerName, null);
     playerContainer.insertBefore(playerColor, playerName);
@@ -182,20 +191,24 @@ function addOtherToMenu(node: ModelNode){
     updatePlayerIndicator(node.Id(), node.getNickname(), node.getColor());
 }
 
-function removeFromMenu(node: ModelNode){
+function removeFromMenu(node: ModelNode) {
     const id = node.Id();
-    const playerEl = document.getElementById('pi-' + id);
+    const playerEl = document.getElementById("pi-" + id);
     playerEl.parentNode.removeChild(playerEl);
 }
 
-function updateMenu(node: ModelNode){
+function updateMenu(node: ModelNode) {
     updatePlayerIndicator(node.Id(), node.getNickname(), node.getColor());
 }
 
-function updatePlayerIndicator(id: string, name: string, color: string){
-    document.getElementById('pi-' + id);
-    const playerNameEl = document.querySelector(`#pi-${id} .player-list-name`) as HTMLSpanElement
-    const colorEl = document.querySelector(`#pi-${id} .color-indicator`) as HTMLSpanElement
+function updatePlayerIndicator(id: string, name: string, color: string) {
+    document.getElementById("pi-" + id);
+    const playerNameEl = document.querySelector(
+        `#pi-${id} .player-list-name`
+    ) as HTMLSpanElement;
+    const colorEl = document.querySelector(
+        `#pi-${id} .color-indicator`
+    ) as HTMLSpanElement;
     playerNameEl.innerText = name;
     colorEl.style.backgroundColor = color;
 }
