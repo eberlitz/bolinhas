@@ -41,24 +41,32 @@ async function init() {
     viewport.setModel(model);
 
     socket.on("connect", () => {
+        // This event can happen multiple times, in the beginning or if the network disconnects the user momentarily
+        // In the second case, the audioBroker has to be reinitialized.
+        // TODO: Reinitiate peerjs, check if id would change
+
         const peerId = audioBroker.peerID;
         console.log("My peer ID is: " + peerId);
-        const myNode = new ModelNode(peerId);
-        myNode.setColor(randomColor(100));
 
-        let nickname = localStorage.getItem("nickname");
-        if (!nickname) {
-            nickname = myNode.Id().slice(0, 5);
+        let myNode = model.GetNode(peerId);
+        if (!myNode) {
+            myNode = new ModelNode(peerId);
+            myNode.setColor(randomColor(100));
+            let nickname = localStorage.getItem("nickname");
+            if (!nickname) {
+                nickname = myNode.Id().slice(0, 5);
+            }
+            myNode.setNickname(nickname);
+            myNode.on(
+                "updated",
+                throttle((n: ModelNode) => {
+                    // emit updates to the socket.io for any updates on my node.
+                    socket.emit("update", room, n.toJSON());
+                }, 33)
+            );
+            model.Add(myNode);
         }
-        myNode.setNickname(nickname);
-        myNode.on(
-            "updated",
-            throttle((n: ModelNode) => {
-                // emit updates to the socket.io for any updates on my node.
-                socket.emit("update", room, n.toJSON());
-            }, 33)
-        );
-        model.Add(myNode);
+
         console.log(`Joining room "${room} ..."`);
         socket.emit("join", room, myNode.toJSON());
     });
@@ -160,7 +168,7 @@ function addMeToMenu(node: ModelNode) {
     playerName.type = "text";
     playerName.value = node.getNickname();
     playerName.addEventListener("change", () => {
-        const nickname = playerName.value
+        const nickname = playerName.value;
         node.setNickname(nickname);
         localStorage.setItem("nickname", nickname);
     });

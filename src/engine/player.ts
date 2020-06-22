@@ -41,13 +41,17 @@ export class Player extends THREE.Group {
         }
     }
 
-    onMediaStream(stream: MediaStream) {
+    onMediaStream(stream?: MediaStream) {
+        if (!stream) {
+            this.analyser = null;
+            return;
+        };
         const audioEl = new Audio();
         // audioEl.autoplay = true;
         audioEl.srcObject = stream;
 
         var sound = new THREE.PositionalAudio(this.audioListener);
-        sound.setVolume( 1 );
+        sound.setVolume(1);
         sound.setDistanceModel("exponential");
         sound.setRolloffFactor(15);
         // O Audio será ouvido em 100% se estiver a uma distancia de X
@@ -55,19 +59,12 @@ export class Player extends THREE.Group {
         // MaxDistance indica o ponto aonde o audio não será mais reduzido. Portando n˜åo devemos setar.
         // sound.setMaxDistance(10000);
 
-
-
-       
-        
-
-
         // for debugging sounds
-        const sounds = (window as any).sounds = (window as any).sounds || [];
+        const sounds = ((window as any).sounds = (window as any).sounds || []);
         sounds.push(sound);
-        
+
         // var helper = new PositionalAudioHelper(sound, 10);
         // sound.add(helper);
-        
 
         // to use sine generator
         // var oscillator = this.audioListener.context.createOscillator();
@@ -79,7 +76,7 @@ export class Player extends THREE.Group {
         var context = this.audioListener.context;
         var source = context.createMediaStreamSource(stream);
         sound.setNodeSource(source as any);
-        
+
         sound.autoplay = true;
         // sound.setMediaStreamSource(stream);
         // sound.setRefDistance(20);

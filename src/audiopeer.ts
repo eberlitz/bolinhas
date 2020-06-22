@@ -246,6 +246,7 @@ export class AudioBroker {
             );
 
             call.on("close", () => {
+                otherNode.mediaStream = null;
                 console.log("call closed, removing audio el");
                 // const n = this.model.GetNode(call.peer);
                 // if (n) {
