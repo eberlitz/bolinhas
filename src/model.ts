@@ -42,6 +42,7 @@ export class Model extends EventEmitter {
 export type Vec2 = [number, number];
 
 export declare interface ModelNode {
+    on(event: "stream", listener: (n: MediaStream) => void): this;
     on(event: "position", listener: (n: Vec2) => void): this;
     on(event: "nickname", listener: (n: string) => void): this;
     on(event: "color", listener: (n: string) => void): this;
