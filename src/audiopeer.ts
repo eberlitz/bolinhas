@@ -210,17 +210,17 @@ export class AudioBroker {
             const listeners: Array<() => void> = [];
             const dispose = () => listeners.splice(0).forEach((d) => d());
 
-            const onMyPositionChange = ([myX, myY]: Vec2) => {
-                const ref = this.model.GetNode(call.peer);
-                if (!ref) {
-                    console.warn(
-                        `Could not find ${call.peer} in model `,
-                        this.model.nodes.map((a) => a.Id())
-                    );
-                    return;
-                }
-                // this.updateVolume(myX, myY, peer_audio, ref);
-            };
+            // const onMyPositionChange = ([myX, myY]: Vec2) => {
+            //     const ref = this.model.GetNode(call.peer);
+            //     if (!ref) {
+            //         console.warn(
+            //             `Could not find ${call.peer} in model `,
+            //             this.model.nodes.map((a) => a.Id())
+            //         );
+            //         return;
+            //     }
+            //     this.updateVolume(myX, myY, peer_audio, ref);
+            // };
             const removeIfNodeDeleted = (n: ModelNode) => {
                 if (n.Id() === call.peer) {
                     dispose();
@@ -234,10 +234,10 @@ export class AudioBroker {
                 }
             };
 
-            me.addListener("position", onMyPositionChange);
-            listeners.push(() =>
-                me.removeListener("position", onMyPositionChange)
-            );
+            // me.addListener("position", onMyPositionChange);
+            // listeners.push(() =>
+            //     me.removeListener("position", onMyPositionChange)
+            // );
 
             // remove the audio el from DOM and close the call.
             this.model.addListener("deleted", removeIfNodeDeleted);
@@ -247,34 +247,33 @@ export class AudioBroker {
 
             call.on("close", () => {
                 console.log("call closed, removing audio el");
-                const n = this.model.GetNode(call.peer);
-                if (n) {
-                    this.model.Delete(n);
-                }
+                // const n = this.model.GetNode(call.peer);
+                // if (n) {
+                //     this.model.Delete(n);
+                // }
                 peer_audio && peer_audio.parentElement &&
                     peer_audio.parentElement.removeChild(peer_audio);
                 video &&
                     video.parentElement &&
                     video.parentElement.removeChild(video);
-                dispose();
             });
 
             
-            const onOtherNodePositionChange = ([hisX, hisY]: Vec2) => {
-                if (!me) {
-                    console.warn(
-                        `Could not find myself in model `,
-                        this.model.nodes.map((a) => a.Id())
-                    );
-                    return;
-                }
-                // this.updateVolume(hisX, hisY, peer_audio, me);
-            };
+            // const onOtherNodePositionChange = ([hisX, hisY]: Vec2) => {
+            //     if (!me) {
+            //         console.warn(
+            //             `Could not find myself in model `,
+            //             this.model.nodes.map((a) => a.Id())
+            //         );
+            //         return;
+            //     }
+            //     this.updateVolume(hisX, hisY, peer_audio, me);
+            // };
 
-            otherNode.addListener("position", onOtherNodePositionChange);
-            listeners.push(() =>
-                otherNode.removeListener("position", onOtherNodePositionChange)
-            );
+            // otherNode.addListener("position", onOtherNodePositionChange);
+            // listeners.push(() =>
+            //     otherNode.removeListener("position", onOtherNodePositionChange)
+            // );
         });
 
         call.on("error", function (err) {
@@ -282,31 +281,28 @@ export class AudioBroker {
         });
     }
 
-    private updateVolume(
-        x: number,
-        y: number,
-        peer_audio: HTMLAudioElement,
-        ref: ModelNode
-    ) {
-        const [refX, refY] = ref.getPos();
+    // private updateVolume(
+    //     x: number,
+    //     y: number,
+    //     peer_audio: HTMLAudioElement,
+    //     ref: ModelNode
+    // ) {
+    //     const [refX, refY] = ref.getPos();
 
-        let my = new p5.Vector();
-        my.set(refX, refY);
-        let his = new p5.Vector();
-        his.set(x, y);
+    //     let my = new p5.Vector();
+    //     my.set(refX, refY);
+    //     let his = new p5.Vector();
+    //     his.set(x, y);
 
-        const dist = my.dist(his);
+    //     const dist = my.dist(his);
 
-        const scale = d3
-            .scalePow()
-            .exponent(0.36)
-            .domain([0, 400])
-            .range([1, 0]);
-        peer_audio.volume = scale(Math.max(Math.min(dist, 400), 0));
-
-        // peer_audio.volume = Math.max(Math.min(map(dist, 0, 400, 1, 0), 1), 0);
-        // console.log("volume", peer_audio.volume);
-    }
+    //     const scale = d3
+    //         .scalePow()
+    //         .exponent(0.36)
+    //         .domain([0, 400])
+    //         .range([1, 0]);
+    //     peer_audio.volume = scale(Math.max(Math.min(dist, 400), 0));
+    // }
 }
 
 function map(
