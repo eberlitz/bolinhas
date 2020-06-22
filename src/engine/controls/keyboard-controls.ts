@@ -5,7 +5,7 @@ import { Accelerator } from "./accelerator";
 export const PLAYER_SPEED = 1;
 export const PLAYER_FORCE = 0.4;
 
-export class PlayerControls extends Accelerator {
+export class KeyboardControls extends Accelerator {
     state = {
         left: 0,
         right: 0,

@@ -67,7 +67,6 @@ export class Player extends THREE.Group {
             this.position.y = pos[1];
         }
 
-        console.log(this.position);
     }
 
     setColor(color: THREE.Color) {

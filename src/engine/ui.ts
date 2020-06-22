@@ -9,8 +9,11 @@ declare module "three" {
 
 import particleUrl from "../textures/particle2.png";
 import perlinUrl from "../textures/perlin-512.png";
-import { PlayerControls } from "./controls/player-controls";
 import { Player } from "./player";
+import { PressControls } from "./controls/press-controls";
+import { KeyboardControls } from "./controls/keyboard-controls";
+import { Accelerator } from "./controls/accelerator";
+import { PlayerControl } from "./controls/controls";
 
 const defaultParticleOpts = {
     positionRandomness: 0.9,
@@ -31,7 +34,7 @@ let renderer: THREE.WebGLRenderer;
 const target = document.getElementById("viewport");
 
 export class Viewport {
-    private playerControl?: PlayerControls;
+    private playerControl?: PlayerControl;
     private clock = new THREE.Clock();
     audioListener = new THREE.AudioListener();
 
@@ -51,7 +54,11 @@ export class Viewport {
         model.on("added", (n) => {
             const player = new Player(n, this.audioListener);
             if (model.myId === n.Id()) {
-                this.playerControl = new PlayerControls(player);
+                if('ontouchstart' in document.documentElement){
+                    this.playerControl = new PressControls(player, scene, camera);
+                } else {
+                    this.playerControl = new KeyboardControls(player);
+                }
                 player.add(camera);
                 player.add(this.audioListener);
             }

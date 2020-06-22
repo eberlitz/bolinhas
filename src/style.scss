@@ -28,6 +28,10 @@ body {
   margin: 5px;
   background-color: #ddd;
   padding: 5px;
+
+  span {
+    user-select: none;
+  }
 }
 
 .main-player-item{
