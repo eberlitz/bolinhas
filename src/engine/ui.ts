@@ -6,6 +6,7 @@ import "../lib/GPUParticleSystem";
 declare module "three" {
     let GPUParticleSystem: any;
 }
+// import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 import particleUrl from "../textures/particle2.png";
 import perlinUrl from "../textures/perlin-512.png";

@@ -1,6 +1,7 @@
 import THREE = require("three");
 import { ModelNode, Vec2 } from "../model";
 import * as d3 from "d3-scale";
+// import { PositionalAudioHelper } from "three/examples/jsm/helpers/PositionalAudioHelper";
 
 export class Player extends THREE.Group {
     private material!: THREE.MeshBasicMaterial;
@@ -46,15 +47,21 @@ export class Player extends THREE.Group {
         audioEl.srcObject = stream;
 
         var sound = new THREE.PositionalAudio(this.audioListener);
+        sound.setRefDistance(20);
+        sound.setMaxDistance(50);
+        sound.rotateX(THREE.MathUtils.degToRad(90));
+        // sound.setDirectionalCone(360, 230, 0.1);
+        
+        // var helper = new PositionalAudioHelper(sound, 10);
+        // sound.add(helper);
 
         var context = this.audioListener.context;
         var source = context.createMediaStreamSource(stream);
         sound.setNodeSource(source as any);
 
-        sound.setMaxDistance(50);
         sound.autoplay = true;
         // sound.setMediaStreamSource(stream);
-        sound.setRefDistance(20);
+        // sound.setRefDistance(20);
         sound.play();
         this.add(sound);
         this.analyser = new THREE.AudioAnalyser(sound, 32);
@@ -66,7 +73,6 @@ export class Player extends THREE.Group {
             this.position.x = pos[0];
             this.position.y = pos[1];
         }
-
     }
 
     setColor(color: THREE.Color) {
@@ -77,11 +83,10 @@ export class Player extends THREE.Group {
     update(time: number) {
         if (this.analyser) {
             let avg = this.analyser.getAverageFrequency();
-            console.log(avg);
+            // console.log(avg);
 
-            const scale = d3.scaleLinear().domain([0, 220]).range([0, 1]);
-
-            avg = scale(Math.max(Math.min(avg, 220), 0));
+            const scale = d3.scaleLinear().domain([0, 180]).range([0, 1]);
+            avg = scale(Math.max(Math.min(avg, 180), 0));
 
             this.ripple.scale.x = 4 * avg;
             this.ripple.scale.y = 4 * avg;
