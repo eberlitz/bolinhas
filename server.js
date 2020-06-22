@@ -16,13 +16,6 @@ var public = "dist";
 let sendFile = (url, res, next) =>
   res.sendFile(path.join(__dirname, public, url));
 
-// set up a route to redirect http to https
-if (isProduction) {
-  app.get("*", (req, res) => {
-    res.redirect("https://" + req.headers.host + req.url);
-  });
-}
-
 // key is the room name
 // Value is the data for that room
 // To scale this needs to be in a redis
