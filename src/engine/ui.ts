@@ -53,6 +53,7 @@ export class Viewport {
 
     setModel(model: Model) {
         model.on("added", (n) => {
+
             const player = new Player(n, this.audioListener);
             if (model.myId === n.Id()) {
                 if ("ontouchstart" in document.documentElement) {
@@ -80,6 +81,7 @@ export class Viewport {
             n.on("color", updatePlayerColor);
             // Is my player?
             n.on("position", updatePlayerPos);
+            updatePlayerPos(n.getPos());
 
             n.once("removed", () => {
                 n.removeListener("color", updatePlayerColor);
