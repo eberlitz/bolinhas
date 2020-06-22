@@ -47,22 +47,44 @@ export class Player extends THREE.Group {
         audioEl.srcObject = stream;
 
         var sound = new THREE.PositionalAudio(this.audioListener);
-        sound.setRefDistance(20);
-        sound.setMaxDistance(50);
-        sound.rotateX(THREE.MathUtils.degToRad(90));
-        // sound.setDirectionalCone(360, 230, 0.1);
+        sound.setVolume( 1 );
+        sound.setDistanceModel("exponential");
+        sound.setRolloffFactor(15);
+        // O Audio será ouvido em 100% se estiver a uma distancia de X
+        sound.setRefDistance(150);
+        // MaxDistance indica o ponto aonde o audio não será mais reduzido. Portando n˜åo devemos setar.
+        // sound.setMaxDistance(10000);
+
+
+
+       
+        
+
+
+        // for debugging sounds
+        const sounds = (window as any).sounds = (window as any).sounds || [];
+        sounds.push(sound);
         
         // var helper = new PositionalAudioHelper(sound, 10);
         // sound.add(helper);
+        
 
+        // to use sine generator
+        // var oscillator = this.audioListener.context.createOscillator();
+        // oscillator.type = 'sine';
+        // oscillator.frequency.setValueAtTime( 144, sound.context.currentTime );
+        // oscillator.start( 0 );
+        // sound.setNodeSource( oscillator as any );
+        // TO use stream from other user
         var context = this.audioListener.context;
         var source = context.createMediaStreamSource(stream);
         sound.setNodeSource(source as any);
-
+        
         sound.autoplay = true;
         // sound.setMediaStreamSource(stream);
         // sound.setRefDistance(20);
         sound.play();
+        sound.rotateX(THREE.MathUtils.degToRad(90));
         this.add(sound);
         this.analyser = new THREE.AudioAnalyser(sound, 32);
         // this.analyser.getAverageFrequency();
@@ -85,8 +107,8 @@ export class Player extends THREE.Group {
             let avg = this.analyser.getAverageFrequency();
             // console.log(avg);
 
-            const scale = d3.scaleLinear().domain([0, 180]).range([0, 1]);
-            avg = scale(Math.max(Math.min(avg, 180), 0));
+            const scale = d3.scaleLinear().domain([0, 100]).range([0, 1]);
+            avg = scale(Math.max(Math.min(avg, 100), 0));
 
             this.ripple.scale.x = 4 * avg;
             this.ripple.scale.y = 4 * avg;

@@ -17,7 +17,7 @@ export class KeyboardControls extends Accelerator {
     private _onKeyUp = this.onKeyUp.bind(this);
     private _onKeyDown = this.onKeyDown.bind(this);
 
-    constructor(private target: Player) {
+    constructor(private target: Player, private camera: THREE.OrthographicCamera) {
         super();
         window.addEventListener("keyup", this._onKeyUp, false);
         window.addEventListener("keydown", this._onKeyDown, false);
@@ -35,16 +35,11 @@ export class KeyboardControls extends Accelerator {
         const deltaY = this.state.up - this.state.down;
 
         // TO lock the camera as the user moves, without adding the camera to the player group
-        // camera.position.x = newPosition.x;
-        // camera.position.y = newPosition.y;
-        // camera.lookAt(
-        //     new THREE.Vector3(camera.position.x, camera.position.y, 0)
-        // );
-        // camera.updateProjectionMatrix();
-        const force = new THREE.Vector3(deltaX, deltaY)
-        force.setLength(PLAYER_FORCE)
 
-        this.applyForce(force)
+        const force = new THREE.Vector3(deltaX, deltaY);
+        force.setLength(PLAYER_FORCE);
+
+        this.applyForce(force);
         super.update();
         this.target.position.copy(this.position);
 
@@ -53,15 +48,22 @@ export class KeyboardControls extends Accelerator {
             this.target.position.y,
         ]);
 
+        this.camera.position.x = this.position.x;
+        this.camera.position.y = this.position.y;
+        this.camera.lookAt(
+            new THREE.Vector3(this.position.x, this.position.y, 0)
+        );
+        this.camera.updateProjectionMatrix();
+
         // TO ROTATE THE USER
-        // if (deltaX || deltaY) {
-        //     this.target.rotation.z = Math.atan2(deltaY, deltaX) - Math.PI / 2;
-        // }
+        if (deltaX || deltaY) {
+            this.target.rotation.z = Math.atan2(deltaY, deltaX) - Math.PI / 2;
+        }
     }
 
     onKeyDown(evt: KeyboardEvent) {
         let prevent = false;
-        if(evt.target !== document.getElementById('viewport')){
+        if (evt.target !== document.getElementById("viewport")) {
             return;
         }
         switch (evt.key) {

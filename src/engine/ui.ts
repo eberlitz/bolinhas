@@ -55,12 +55,16 @@ export class Viewport {
         model.on("added", (n) => {
             const player = new Player(n, this.audioListener);
             if (model.myId === n.Id()) {
-                if('ontouchstart' in document.documentElement){
-                    this.playerControl = new PressControls(player, scene, camera);
+                if ("ontouchstart" in document.documentElement) {
+                    this.playerControl = new PressControls(
+                        player,
+                        scene,
+                        camera
+                    );
                 } else {
-                    this.playerControl = new KeyboardControls(player);
+                    this.playerControl = new KeyboardControls(player, camera);
                 }
-                player.add(camera);
+                // player.add(camera);
                 player.add(this.audioListener);
             }
 
@@ -133,8 +137,6 @@ export class Viewport {
         // renderer2.render(scene2, camera);
     }
 }
-
-
 
 function initUI(target: HTMLElement) {
     camera = new THREE.OrthographicCamera(-1, 1, 1, -1);
