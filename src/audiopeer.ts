@@ -1,9 +1,6 @@
 import "webrtc-adapter";
 import * as Peer from "peerjs";
-import { Model, ModelNode, Vec2 } from "./model";
-import p5 = require("p5");
-
-import * as d3 from "d3-scale";
+import { Model, ModelNode } from "./model";
 
 export async function requestAudio() {
     const localAudioStream = await navigator.mediaDevices.getUserMedia({
@@ -43,7 +40,7 @@ export function setupPeerjs(
             console.log("closed");
         });
         peer.on("disconnected", function () {
-            console.log("disconnected");
+            console.log("peerjs disconnected");
         });
     });
 }
@@ -152,29 +149,6 @@ export class AudioBroker {
                 stream.getTracks()
             );
 
-            let peer_audio = document.getElementById(
-                "au_" + call.peer
-            ) as HTMLAudioElement;
-            // if (!peer_audio) {
-            //     peer_audio = document.createElement(
-            //         "audio"
-            //     ) as HTMLAudioElement;
-            //     peer_audio.id = "au_" + call.peer;
-            //     document.body.appendChild(peer_audio);
-            //     peer_audio.onloadedmetadata = function (e) {
-            //         console.log("now playing the audio");
-            //         peer_audio.play();
-            //     };
-            // }
-            // // Older browsers may not have srcObject
-            // if (("srcObject" in peer_audio) as any) {
-            //     peer_audio.srcObject = stream;
-            // } else {
-            //     // Avoid using this in new browsers, as it is going away.
-            //     peer_audio.src = window.URL.createObjectURL(stream);
-            // }
-
-
             otherNode.mediaStream = stream;
 
 
@@ -205,39 +179,19 @@ export class AudioBroker {
                 video.volume = 0;
             }
 
-            const me = this.model.GetNode(this.model.myId);
-
             const listeners: Array<() => void> = [];
             const dispose = () => listeners.splice(0).forEach((d) => d());
 
-            // const onMyPositionChange = ([myX, myY]: Vec2) => {
-            //     const ref = this.model.GetNode(call.peer);
-            //     if (!ref) {
-            //         console.warn(
-            //             `Could not find ${call.peer} in model `,
-            //             this.model.nodes.map((a) => a.Id())
-            //         );
-            //         return;
-            //     }
-            //     this.updateVolume(myX, myY, peer_audio, ref);
-            // };
             const removeIfNodeDeleted = (n: ModelNode) => {
                 if (n.Id() === call.peer) {
                     dispose();
                     console.log("Closing call with", call.peer);
                     call.close();
-                    peer_audio && peer_audio.parentElement &&
-                        peer_audio.parentElement.removeChild(peer_audio);
                     video &&
                         video.parentElement &&
                         video.parentElement.removeChild(video);
                 }
             };
-
-            // me.addListener("position", onMyPositionChange);
-            // listeners.push(() =>
-            //     me.removeListener("position", onMyPositionChange)
-            // );
 
             // remove the audio el from DOM and close the call.
             this.model.addListener("deleted", removeIfNodeDeleted);
@@ -248,33 +202,11 @@ export class AudioBroker {
             call.on("close", () => {
                 otherNode.mediaStream = null;
                 console.log("call closed, removing audio el");
-                // const n = this.model.GetNode(call.peer);
-                // if (n) {
-                //     this.model.Delete(n);
-                // }
-                peer_audio && peer_audio.parentElement &&
-                    peer_audio.parentElement.removeChild(peer_audio);
                 video &&
                     video.parentElement &&
                     video.parentElement.removeChild(video);
             });
 
-            
-            // const onOtherNodePositionChange = ([hisX, hisY]: Vec2) => {
-            //     if (!me) {
-            //         console.warn(
-            //             `Could not find myself in model `,
-            //             this.model.nodes.map((a) => a.Id())
-            //         );
-            //         return;
-            //     }
-            //     this.updateVolume(hisX, hisY, peer_audio, me);
-            // };
-
-            // otherNode.addListener("position", onOtherNodePositionChange);
-            // listeners.push(() =>
-            //     otherNode.removeListener("position", onOtherNodePositionChange)
-            // );
         });
 
         call.on("error", function (err) {
@@ -282,36 +214,4 @@ export class AudioBroker {
         });
     }
 
-    // private updateVolume(
-    //     x: number,
-    //     y: number,
-    //     peer_audio: HTMLAudioElement,
-    //     ref: ModelNode
-    // ) {
-    //     const [refX, refY] = ref.getPos();
-
-    //     let my = new p5.Vector();
-    //     my.set(refX, refY);
-    //     let his = new p5.Vector();
-    //     his.set(x, y);
-
-    //     const dist = my.dist(his);
-
-    //     const scale = d3
-    //         .scalePow()
-    //         .exponent(0.36)
-    //         .domain([0, 400])
-    //         .range([1, 0]);
-    //     peer_audio.volume = scale(Math.max(Math.min(dist, 400), 0));
-    // }
-}
-
-function map(
-    n: number,
-    start1: number,
-    stop1: number,
-    start2: number,
-    stop2: number
-) {
-    return ((n - start1) / (stop1 - start1)) * (stop2 - start2) + start2;
 }
