@@ -1,7 +1,14 @@
 import THREE = require("three");
 import { ModelNode, Vec2 } from "../model";
 import * as d3 from "d3-scale";
-// import { PositionalAudioHelper } from "three/examples/jsm/helpers/PositionalAudioHelper";
+
+const audioDistanceModel = {
+    maxDistance: 400,
+    radius: 150,
+    volume: 1,
+};
+// TODO: Remove later, debug only
+(window as any).audioDistanceModel = audioDistanceModel;
 
 export class Player extends THREE.Group {
     private material!: THREE.MeshBasicMaterial;
@@ -10,6 +17,7 @@ export class Player extends THREE.Group {
 
     _onMediaStream = this.onMediaStream.bind(this);
     ripple: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial>;
+    sound: THREE.Audio<GainNode>;
 
     constructor(
         public node: ModelNode,
@@ -45,23 +53,19 @@ export class Player extends THREE.Group {
         if (!stream) {
             this.analyser = null;
             return;
-        };
+        }
         const audioEl = new Audio();
         // audioEl.autoplay = true;
-        audioEl.srcObject = stream;
+        // Older browsers may not have srcObject
+        if (("srcObject" in audioEl) as any) {
+            audioEl.srcObject = stream;
+        } else {
+            // Avoid using this in new browsers, as it is going away.
+            audioEl.src = window.URL.createObjectURL(stream);
+        }
 
-        var sound = new THREE.PositionalAudio(this.audioListener);
+        var sound = (this.sound = new THREE.Audio(this.audioListener));
         sound.setVolume(1);
-        sound.setDistanceModel("exponential");
-        sound.setRolloffFactor(15);
-        // O Audio será ouvido em 100% se estiver a uma distancia de X
-        sound.setRefDistance(150);
-        // MaxDistance indica o ponto aonde o audio não será mais reduzido. Portando n˜åo devemos setar.
-        // sound.setMaxDistance(10000);
-
-        // for debugging sounds
-        const sounds = ((window as any).sounds = (window as any).sounds || []);
-        sounds.push(sound);
 
         // var helper = new PositionalAudioHelper(sound, 10);
         // sound.add(helper);
@@ -76,6 +80,12 @@ export class Player extends THREE.Group {
         var context = this.audioListener.context;
         var source = context.createMediaStreamSource(stream);
         sound.setNodeSource(source as any);
+
+        // var oscGain = (this.oscGain = context.createGain());
+        // source.connect(oscGain);
+        // source.connect(context.destination);
+        // oscGain.connect(context.destination);
+        // oscGain.gain.value = 0;
 
         sound.autoplay = true;
         // sound.setMediaStreamSource(stream);
@@ -109,6 +119,30 @@ export class Player extends THREE.Group {
 
             this.ripple.scale.x = 4 * avg;
             this.ripple.scale.y = 4 * avg;
+        }
+        
+        if (this.sound) {
+            var distance = this.getWorldPosition(
+                new THREE.Vector3()
+            ).distanceTo(
+                this.audioListener.getWorldPosition(new THREE.Vector3())
+            );
+            let gain = 0;
+            if (distance <= audioDistanceModel.maxDistance) {
+                gain =
+                    audioDistanceModel.volume *
+                    (1 - distance / audioDistanceModel.radius);
+            }
+
+            //     const scale = d3
+            //         .scalePow()
+            //         .exponent(0.36)
+            //         .domain([0, 400])
+            //         .range([1, 0]);
+            //     peer_audio.volume = scale(Math.max(Math.min(dist, 400), 0));
+            // }
+            this.sound.getOutput().gain.value = Math.max(gain, 0)
+            // this.sound.setVolume(Math.max(gain, 0));
         }
     }
 
