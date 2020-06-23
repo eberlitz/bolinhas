@@ -10,41 +10,6 @@ export async function requestAudio() {
     return localAudioStream;
 }
 
-export function setupPeerjs(
-    iceServers: any[],
-    localStrem: MediaStream,
-    model: Model
-): Promise<AudioBroker> {
-    return new Promise((resolve, reject) => {
-        const peer = new (Peer as any).default({
-            host: location.hostname,
-            port:
-                (location.port as any) ||
-                (location.protocol === "https:" ? 443 : 80),
-            path: "/peerjs",
-            config: {
-                iceServers: [{ url: "stun:stun1.l.google.com:19302" }].concat(
-                    iceServers || []
-                ),
-            },
-            debug: 1,
-        } as Peer.PeerConnectOption) as Peer;
-        peer.on("open", function (id) {
-            model.myId = id;
-            resolve(new AudioBroker(peer, localStrem, model));
-        });
-        peer.on("error", function (err) {
-            console.log(err);
-        });
-        peer.on("close", function () {
-            console.log("closed");
-        });
-        peer.on("disconnected", function () {
-            console.log("peerjs disconnected");
-        });
-    });
-}
-
 async function screenShare() {
     const stream = await (navigator.mediaDevices as any).getDisplayMedia({
         video: {
@@ -59,51 +24,104 @@ export class AudioBroker {
     public peerID: string;
     private currentAudioCalls: Map<string, Peer.MediaConnection> = new Map();
     private currentLocalStream: MediaStream;
+    private _ongoingPeerPromise?: Promise<Peer>;
+    private _ensurePeer = async () => {
+        if (this._ongoingPeerPromise) {
+            return this._ongoingPeerPromise;
+        }
+        this._ongoingPeerPromise = this._connectToPeerJS()
+        const peer = await this._ongoingPeerPromise
+        return peer;
+    };
 
     constructor(
-        private peer: Peer,
         public localStream: MediaStream,
-        private model: Model
+        private model: Model,
+        private iceServers: any[]
     ) {
         this.currentLocalStream = localStream;
-        peer.on("call", async (call) => {
-            const oldcall = this.currentAudioCalls.get(call.peer);
-            if (!!oldcall) {
-                oldcall.close();
-                // // ignore if there is already a call to that peer;
-                // console.warn(
-                //     "There is already a audio call to peer " + call.peer
-                // );
-                // return;
-            }
-            this.currentAudioCalls.set(call.peer, call);
+    }
 
-            console.log("receiving call from ", call.peer);
-            // Answer the call, providing our mediaStream
-            call.answer(this.currentLocalStream);
-            // get the media stream of the other peer
+    init() {
+        this._ongoingPeerPromise = null;
+        return this._ensurePeer();
+    }
 
-            this.attachOnStream(call, "from_receiving_call");
-        });
-        this.peerID = peer.id;
-
-        (window as any).startScreenShare = async () => {
-            const stream: MediaStream = await screenShare();
-            stream.addTrack(this.localStream.getAudioTracks()[0]);
-            this.currentLocalStream = stream;
-
-            this.currentAudioCalls.forEach((call) => {
-                if (!call) return;
-                const pID = call.peer;
-                call.close();
-                const newCall = peer.call(pID, stream);
-                this.currentAudioCalls.set(pID, newCall);
-                this.attachOnStream(newCall, "from_make_screenshare_call");
+    private _connectToPeerJS() {
+        const p = new Promise((resolve, reject) => {
+            const peer = new (Peer as any).default({
+                host: location.hostname,
+                port:
+                    (location.port as any) ||
+                    (location.protocol === "https:" ? 443 : 80),
+                path: "/peerjs",
+                config: {
+                    iceServers: [
+                        { url: "stun:stun1.l.google.com:19302" },
+                    ].concat(this.iceServers || []),
+                },
+                debug: 1,
+            } as Peer.PeerConnectOption) as Peer;
+            peer.on("open", (id) => {
+                if (this.model.myId && this.model.myId !== id) {
+                    console.warn("PeerID HAS CHANGED");
+                }
+                this.model.myId = id;
+                resolve(peer);
             });
-        };
+            peer.on("error", (err) => {
+                console.log(err);
+            });
+            peer.on("close", () => {
+                console.log("closed");
+            });
+            peer.on("disconnected", () => {
+                console.log("peerjs disconnected");
+            });
+        });
+
+        return p.then((peer: Peer) => {
+            peer.on("call", async (call) => {
+                const oldcall = this.currentAudioCalls.get(call.peer);
+                if (!!oldcall) {
+                    oldcall.close();
+                    // // ignore if there is already a call to that peer;
+                    // console.warn(
+                    //     "There is already a audio call to peer " + call.peer
+                    // );
+                    // return;
+                }
+                this.currentAudioCalls.set(call.peer, call);
+
+                console.log("receiving call from ", call.peer);
+                // Answer the call, providing our mediaStream
+                call.answer(this.currentLocalStream);
+                // get the media stream of the other peer
+
+                this.attachOnStream(call, "from_receiving_call");
+            });
+            this.peerID = peer.id;
+
+            (window as any).startScreenShare = async () => {
+                const stream: MediaStream = await screenShare();
+                stream.addTrack(this.localStream.getAudioTracks()[0]);
+                this.currentLocalStream = stream;
+
+                this.currentAudioCalls.forEach((call) => {
+                    if (!call) return;
+                    const pID = call.peer;
+                    call.close();
+                    const newCall = peer.call(pID, stream);
+                    this.currentAudioCalls.set(pID, newCall);
+                    this.attachOnStream(newCall, "from_make_screenshare_call");
+                });
+            };
+            return peer;
+        });
     }
 
     public async makeAudioCall(peer_id: string) {
+        const peer = await this._ensurePeer();
         if (this.currentAudioCalls.has(peer_id)) {
             // ignore if there is already a call to that peer;
             console.warn("There is already a audio call to peer " + peer_id);
@@ -112,7 +130,8 @@ export class AudioBroker {
         this.currentAudioCalls.set(peer_id, null);
 
         console.log(`calling ${peer_id}...`);
-        const call = this.peer.call(peer_id, this.currentLocalStream);
+
+        const call = peer.call(peer_id, this.currentLocalStream);
         this.currentAudioCalls.set(peer_id, call);
         this.attachOnStream(call, "from_make_audio_call");
         return call;
@@ -132,7 +151,6 @@ export class AudioBroker {
             }
             pstrem = stream;
 
-
             const otherNode = this.model.GetNode(call.peer);
             if (!otherNode) {
                 console.warn(
@@ -141,7 +159,7 @@ export class AudioBroker {
                 );
                 return;
             }
-            
+
             console.log(
                 msg,
                 "receiving stream from ",
@@ -150,7 +168,6 @@ export class AudioBroker {
             );
 
             otherNode.mediaStream = stream;
-
 
             let video = document.getElementById("vi_" + call.peer) as
                 | HTMLVideoElement
@@ -206,12 +223,10 @@ export class AudioBroker {
                     video.parentElement &&
                     video.parentElement.removeChild(video);
             });
-
         });
 
         call.on("error", function (err) {
             console.log(err);
         });
     }
-
 }

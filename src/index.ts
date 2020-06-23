@@ -1,8 +1,7 @@
 import "./style.scss";
 import * as io from "socket.io-client";
-import { requestAudio, setupPeerjs } from "./audiopeer";
+import { requestAudio, AudioBroker } from "./audiopeer";
 import { Model, ModelNode, ModelNodeJSON } from "./model";
-// import "./engine/ui";
 import { viewport } from "./engine/ui";
 
 document.addEventListener(
@@ -19,14 +18,15 @@ async function init() {
     console.log("Room: ", room);
 
     const localAudioStream = await requestAudio();
-    // const iceServers: any[] = [];
     const iceServers = await fetch("/ice").then((response) => response.json());
 
     var model = new Model();
     initMenu(model);
 
-    const audioBroker = await setupPeerjs(iceServers, localAudioStream, model);
+    
+
     console.log("starting");
+    const audioBroker = new AudioBroker(localAudioStream, model, iceServers);
 
     var socket = io({
         host: location.hostname,
@@ -40,10 +40,13 @@ async function init() {
 
     viewport.setModel(model);
 
-    socket.on("connect", () => {
+    socket.on("connect", async () => {
         // This event can happen multiple times, in the beginning or if the network disconnects the user momentarily
         // In the second case, the audioBroker has to be reinitialized.
         // TODO: Reinitiate peerjs, check if id would change
+
+
+        await audioBroker.init()
 
         const peerId = audioBroker.peerID;
         console.log("My peer ID is: " + peerId);
