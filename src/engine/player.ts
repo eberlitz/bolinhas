@@ -1,7 +1,6 @@
 import THREE = require("three");
 import { ModelNode, Vec2 } from "../model";
 import * as d3 from "d3-scale";
-import { Bodies } from "matter-js";
 
 const audioDistanceModel = {
     maxDistance: 400,
@@ -19,21 +18,12 @@ export class Player extends THREE.Group {
     _onMediaStream = this.onMediaStream.bind(this);
     ripple: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial>;
     sound: THREE.Audio<GainNode>;
-    body: Matter.Body;
 
     constructor(
         public node: ModelNode,
         private audioListener: THREE.AudioListener
     ) {
         super();
-
-        const [x, y] = node.getPos();
-        this.body = Bodies.circle(x, y, 5, {
-            friction: 0.001,
-            frictionAir: 0.005,
-            restitution: 0.5,
-            density: 0.001,
-        });
 
         const color = new THREE.Color(node.getColor());
         const radius = 5;
@@ -120,10 +110,6 @@ export class Player extends THREE.Group {
     }
 
     update(time: number) {
-        const { x, y } = this.body.position;
-        this.position.set(x, y, 0);
-        console.log(this.position)
-       
         if (this.analyser) {
             let avg = this.analyser.getAverageFrequency();
             // console.log(avg);
@@ -134,7 +120,7 @@ export class Player extends THREE.Group {
             this.ripple.scale.x = 4 * avg;
             this.ripple.scale.y = 4 * avg;
         }
-
+        
         if (this.sound) {
             var distance = this.getWorldPosition(
                 new THREE.Vector3()
@@ -155,7 +141,7 @@ export class Player extends THREE.Group {
             //         .range([1, 0]);
             //     peer_audio.volume = scale(Math.max(Math.min(dist, 400), 0));
             // }
-            this.sound.getOutput().gain.value = Math.max(gain, 0);
+            this.sound.getOutput().gain.value = Math.max(gain, 0)
             // this.sound.setVolume(Math.max(gain, 0));
         }
     }

@@ -16,17 +16,6 @@ import { KeyboardControls } from "./controls/keyboard-controls";
 import { Accelerator } from "./controls/accelerator";
 import { PlayerControl } from "./controls/controls";
 
-import * as Matter from "matter-js";
-var Engine = Matter.Engine,
-    World = Matter.World,
-    Bodies = Matter.Bodies;
-// create a Matter.js engine
-const engine = Engine.create({
-    render: { visible: false },
-} as Matter.IEngineDefinition);
-engine.world.gravity.y = 0;
-engine.world.gravity.x = 0;
-
 const defaultParticleOpts = {
     positionRandomness: 0.9,
     velocity: new THREE.Vector3(),
@@ -46,7 +35,7 @@ let renderer: THREE.WebGLRenderer;
 const target = document.getElementById("viewport");
 
 export class Viewport {
-    private playerControl: KeyboardControls;
+    private playerControl?: PlayerControl;
     private clock = new THREE.Clock();
     audioListener = new THREE.AudioListener();
 
@@ -64,17 +53,18 @@ export class Viewport {
 
     setModel(model: Model) {
         model.on("added", (n) => {
+
             const player = new Player(n, this.audioListener);
             if (model.myId === n.Id()) {
-                // if ("ontouchstart" in document.documentElement) {
-                //     this.playerControl = new PressControls(
-                //         player,
-                //         scene,
-                //         camera
-                //     );
-                // } else {
-                this.playerControl = new KeyboardControls(player, camera);
-                // }
+                if ("ontouchstart" in document.documentElement) {
+                    this.playerControl = new PressControls(
+                        player,
+                        scene,
+                        camera
+                    );
+                } else {
+                    this.playerControl = new KeyboardControls(player, camera);
+                }
                 player.add(camera);
                 player.add(this.audioListener);
             }
@@ -106,8 +96,6 @@ export class Viewport {
                 }
             });
             scene.add(player);
-
-            World.add(engine.world, player.body);
         });
     }
 
@@ -146,8 +134,6 @@ export class Viewport {
             }
         });
 
-        // (engine as any).update(time);
-        // Engine.update(engine, time);
         //render
         renderer.render(scene, camera);
         // renderer2.render(scene2, camera);
@@ -203,11 +189,6 @@ function initUI(target: HTMLElement) {
     ground.position.set(0, 0, -1);
     scene.add(ground);
 
-    // var groundBody = Bodies.rectangle(-500, -500, 1000, 1000, {isStatic: true});
-    // add all of the bodies to the world
-    // World.add(engine.world, circles);
-    // World.add(engine.world, [groundBody]);
-
     target.appendChild(renderer.domElement);
 
     // const controls = new OrbitControls(camera, renderer.domElement);
@@ -215,8 +196,6 @@ function initUI(target: HTMLElement) {
     // controls.maxZoom = 2;
 
     const vp = new Viewport(scene);
-    // run the engine
-    Engine.run(engine);
     vp.animate();
 
     return vp;
