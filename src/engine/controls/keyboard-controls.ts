@@ -48,17 +48,17 @@ export class KeyboardControls extends Accelerator {
             this.target.position.y,
         ]);
 
-        this.camera.position.x = this.position.x;
-        this.camera.position.y = this.position.y;
-        this.camera.lookAt(
-            new THREE.Vector3(this.position.x, this.position.y, 0)
-        );
-        this.camera.updateProjectionMatrix();
+        // this.camera.position.x = this.position.x;
+        // this.camera.position.y = this.position.y;
+        // this.camera.lookAt(
+        //     new THREE.Vector3(this.position.x, this.position.y, 0)
+        // );
+        // this.camera.updateProjectionMatrix();
 
-        // TO ROTATE THE USER
-        if (deltaX || deltaY) {
-            this.target.rotation.z = Math.atan2(deltaY, deltaX) - Math.PI / 2;
-        }
+        // // TO ROTATE THE USER
+        // if (deltaX || deltaY) {
+        //     this.target.rotation.z = Math.atan2(deltaY, deltaX) - Math.PI / 2;
+        // }
     }
 
     onKeyDown(evt: KeyboardEvent) {

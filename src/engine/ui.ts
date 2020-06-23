@@ -65,7 +65,7 @@ export class Viewport {
                 } else {
                     this.playerControl = new KeyboardControls(player, camera);
                 }
-                // player.add(camera);
+                player.add(camera);
                 player.add(this.audioListener);
             }
 
