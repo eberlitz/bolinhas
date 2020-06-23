@@ -1,18 +1,17 @@
 import { Player } from "../player";
 import THREE = require("three");
 import { Accelerator } from "./accelerator";
+import { Vector, Body } from "matter-js";
+import { controlsOpts } from "./keyboard-controls";
 
-export const PLAYER_SPEED = 1;
-export const PLAYER_FORCE = 0.4;
-
-export class PressControls extends Accelerator {
+export class PressControls {
     private pos = new THREE.Vector3(); // create once and reuse
     private force?: THREE.Vector3;
     private raycaster = new THREE.Raycaster();
     private basePlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
     private pressed = false;
     constructor(private target: Player, private scene: THREE.Scene, private camera: THREE.Camera) {
-        super();
+        // super();
         if('ontouchstart' in document.documentElement){
             window.addEventListener("touchstart", this.onTouchStart);
             window.addEventListener("touchmove", this.onTouchMove);
@@ -50,8 +49,12 @@ export class PressControls extends Accelerator {
 
     private updateForce(x: number, y: number) {
         this.updateMousePos(x, y);
+
         this.force = this.pos.clone().sub(this.target.position);
-        this.force.setLength(PLAYER_FORCE);
+        this.force.setLength(controlsOpts.playerForce);
+
+        const v = Vector.create(this.force.x, this.force.y)
+        Body.applyForce(this.target.body, Vector.clone(this.target.body.position), v);
     }
 
     private updateMousePos(x: number, y: number) {
@@ -71,16 +74,16 @@ export class PressControls extends Accelerator {
     update() {
         // Update Player position
 
-        if (this.force) {
-            this.applyForce(this.force)
-        }
-        super.update();
-        this.target.position.copy(this.position);
+        // if (this.force) {
+        //     this.applyForce(this.force)
+        // }
+        // super.update();
+        // this.target.position.copy(this.position);
 
-        this.target.node.setPos([
-            this.target.position.x,
-            this.target.position.y,
-        ]);
+        // this.target.node.setPos([
+        //     this.target.position.x,
+        //     this.target.position.y,
+        // ]);
     }
 
     onTouchEnd = (evt: KeyboardEvent) => {

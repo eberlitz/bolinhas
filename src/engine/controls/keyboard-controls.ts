@@ -1,11 +1,11 @@
 import { Player } from "../player";
 import THREE = require("three");
-import { Accelerator } from "./accelerator";
 import { Body, Vector } from "matter-js";
-import { DirectionalLightShadow } from "three";
 
-export const PLAYER_SPEED = 1;
-export const PLAYER_FORCE = 0.00001;
+export const controlsOpts = {
+    playerForce: 0.005
+};
+(window as any).controlsOpts = controlsOpts
 
 export class KeyboardControls {
     state = {
@@ -43,12 +43,12 @@ export class KeyboardControls {
 
         const v = Vector.mult(
             Vector.normalise(Vector.create(deltaX, deltaY)),
-            PLAYER_FORCE
+            controlsOpts.playerForce
         );
 
         Body.applyForce(this.target.body, Vector.clone(this.target.body.position), v);
 
-        console.log(this.target.body.force);
+        // console.log(this.target.body.force);
         // const force = new THREE.Vector3(deltaX, deltaY);
         // force.setLength(PLAYER_FORCE);
 

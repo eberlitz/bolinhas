@@ -13,13 +13,10 @@ import perlinUrl from "../textures/perlin-512.png";
 import { Player } from "./player";
 import { PressControls } from "./controls/press-controls";
 import { KeyboardControls } from "./controls/keyboard-controls";
-import { Accelerator } from "./controls/accelerator";
-import { PlayerControl } from "./controls/controls";
 
 import * as Matter from "matter-js";
 var Engine = Matter.Engine,
-    World = Matter.World,
-    Bodies = Matter.Bodies;
+    World = Matter.World;
 // create a Matter.js engine
 const engine = Engine.create({
     render: { visible: false },
@@ -46,7 +43,7 @@ let renderer: THREE.WebGLRenderer;
 const target = document.getElementById("viewport");
 
 export class Viewport {
-    private playerControl: KeyboardControls;
+    private playerControl: KeyboardControls | PressControls;
     private clock = new THREE.Clock();
     audioListener = new THREE.AudioListener();
 
@@ -66,15 +63,15 @@ export class Viewport {
         model.on("added", (n) => {
             const player = new Player(n, this.audioListener);
             if (model.myId === n.Id()) {
-                // if ("ontouchstart" in document.documentElement) {
-                //     this.playerControl = new PressControls(
-                //         player,
-                //         scene,
-                //         camera
-                //     );
-                // } else {
-                this.playerControl = new KeyboardControls(player, camera);
-                // }
+                if ("ontouchstart" in document.documentElement) {
+                    this.playerControl = new PressControls(
+                        player,
+                        scene,
+                        camera
+                    );
+                } else {
+                    this.playerControl = new KeyboardControls(player, camera);
+                }
                 player.add(camera);
                 player.add(this.audioListener);
             }

@@ -1,7 +1,7 @@
 import THREE = require("three");
 import { ModelNode, Vec2 } from "../model";
 import * as d3 from "d3-scale";
-import { Bodies } from "matter-js";
+import { Bodies, Body } from "matter-js";
 
 const audioDistanceModel = {
     maxDistance: 400,
@@ -29,11 +29,14 @@ export class Player extends THREE.Group {
 
         const [x, y] = node.getPos();
         this.body = Bodies.circle(x, y, 5, {
-            friction: 0.001,
-            frictionAir: 0.005,
+            // frictionStatic: 0.1,
+            // friction: 0.1,
+            frictionAir: 0.1,
             restitution: 0.5,
-            density: 0.001,
+            density: 0.1,
         });
+        (window as any).Body = Body;
+        (window as any).body = this.body;
 
         const color = new THREE.Color(node.getColor());
         const radius = 5;
@@ -120,10 +123,16 @@ export class Player extends THREE.Group {
     }
 
     update(time: number) {
+        
         const { x, y } = this.body.position;
-        this.position.set(x, y, 0);
-        console.log(this.position)
-       
+        this.position.set(roundFloatTo3decimals(x), roundFloatTo3decimals(y), 0);
+
+        // Update player position
+        this.node.setPos([
+            this.position.x,
+            this.position.y,
+        ]);
+
         if (this.analyser) {
             let avg = this.analyser.getAverageFrequency();
             // console.log(avg);
@@ -163,4 +172,8 @@ export class Player extends THREE.Group {
     dispose() {
         this.node.removeListener("stream", this._onMediaStream);
     }
+}
+
+function roundFloatTo3decimals(v: number) {
+    return Math.round(v * 1000) / 1000;
 }
