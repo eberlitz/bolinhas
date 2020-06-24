@@ -71,7 +71,6 @@ async function init() {
     });
 
     const updatePlayer = (p: ModelNodeJSON) => {
-        // console.log('update', p)
         let n = model.GetNode(p.id);
         if (!n) {
             n = new ModelNode(p.id);
@@ -85,6 +84,11 @@ async function init() {
 
     socket.on("init", (data: any) => {
         console.log('received "init"');
+
+        // If we reconnect we need to cleanup the nodes that are not in the server anymore, as they will get added later
+        model.nodes
+            .filter((n) => n.Id() != audioBroker.peerID && !data[n.Id()])
+            .forEach((n) => model.Delete(n));
 
         for (const key in data) {
             if (data.hasOwnProperty(key) && key !== audioBroker.peerID) {
