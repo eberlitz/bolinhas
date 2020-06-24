@@ -15,8 +15,7 @@ import { PressControls } from "./controls/press-controls";
 import { KeyboardControls } from "./controls/keyboard-controls";
 
 import * as Matter from "matter-js";
-var Engine = Matter.Engine,
-    World = Matter.World;
+import { Bodies, Engine, World } from "matter-js";
 // create a Matter.js engine
 const engine = Engine.create({
     render: { visible: false },
@@ -188,10 +187,10 @@ function initUI(target: HTMLElement) {
     scene.add(directionalLight);
     scene.add(light);
 
-    var size = 1000;
+    var gridSize = 1000;
     var divisions = 50;
     const ground = new THREE.GridHelper(
-        size,
+        gridSize,
         divisions,
         new THREE.Color(0x14a0e6),
         new THREE.Color(0x1e8bc3)
@@ -199,6 +198,23 @@ function initUI(target: HTMLElement) {
     ground.rotateX(THREE.MathUtils.degToRad(90));
     ground.position.set(0, 0, -1);
     scene.add(ground);
+
+    const wallThickness = 20;
+    // scene code
+    World.add(engine.world, [
+        Bodies.rectangle(0, gridSize / 2 + wallThickness / 2, gridSize, wallThickness, {
+            isStatic: true,
+        }), // Top
+        Bodies.rectangle(0, -(gridSize / 2) - wallThickness / 2, gridSize, wallThickness, {
+            isStatic: true,
+        }), // Bottom
+        Bodies.rectangle(-(gridSize / 2) - wallThickness / 2, 0, wallThickness, gridSize, {
+            isStatic: true,
+        }), // left
+        Bodies.rectangle(gridSize / 2 + wallThickness / 2, 0, wallThickness, gridSize, {
+            isStatic: true,
+        }), // Right
+    ]);
 
     // var groundBody = Bodies.rectangle(-500, -500, 1000, 1000, {isStatic: true});
     // add all of the bodies to the world
