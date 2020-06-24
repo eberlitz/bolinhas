@@ -1,7 +1,7 @@
 import THREE = require("three");
 import { Vector, Body } from "matter-js";
 
-import { Player } from "../player";
+import { MainPlayer } from "../player";
 import { controlsOpts } from "./keyboard-controls";
 
 export class PressControls {
@@ -16,8 +16,7 @@ export class PressControls {
     ) as typeof document.oncontextmenu;
 
     constructor(
-        private target: Player,
-        private scene: THREE.Scene,
+        private target: MainPlayer,
         private camera: THREE.Camera
     ) {
         if ("ontouchstart" in document.documentElement) {

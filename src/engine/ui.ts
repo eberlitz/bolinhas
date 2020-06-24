@@ -3,10 +3,10 @@ import * as Matter from "matter-js";
 import { Bodies, Engine, World } from "matter-js";
 
 import "../lib/GPUParticleSystem";
-import { Model, ModelNode, Vec2 } from "../model";
+import { Model, Vec2 } from "../model";
 import particleUrl from "../textures/particle2.png";
 import perlinUrl from "../textures/perlin-512.png";
-import { Player } from "./player";
+import { Player, MainPlayer } from "./player";
 import { PressControls } from "./controls/press-controls";
 import { KeyboardControls } from "./controls/keyboard-controls";
 
@@ -40,13 +40,16 @@ let renderer: THREE.WebGLRenderer;
 
 const target = document.getElementById("viewport");
 
+export interface Updater {
+    update(time: number): void;
+}
+
 export class Viewport {
-    private playerControl: KeyboardControls | PressControls;
     private clock = new THREE.Clock();
     audioListener = new THREE.AudioListener();
-
     particleSystem: any;
-    tick: number = 0;
+    private controls: Updater[] = [];
+
     constructor(private scene: THREE.Scene) {
         var textureLoader = new THREE.TextureLoader();
         this.particleSystem = new THREE.GPUParticleSystem({
@@ -59,32 +62,42 @@ export class Viewport {
 
     setModel(model: Model) {
         model.on("added", (n) => {
-            const player = new Player(n, this.audioListener);
-            if (model.myId === n.Id()) {
+            const player = model.IsMainPlayer(n)
+                ? new MainPlayer(n, this.audioListener)
+                : new Player(n, this.audioListener);
+
+            if (player instanceof MainPlayer) {
+                World.add(engine.world, player.body);
+                let control: Updater;
                 if ("ontouchstart" in document.documentElement) {
-                    this.playerControl = new PressControls(
-                        player,
-                        scene,
-                        camera
-                    );
+                    control = new PressControls(player, camera);
                 } else {
-                    this.playerControl = new KeyboardControls(player, camera);
+                    control = new KeyboardControls(player, camera);
                 }
+                this.controls.push(control);
+                n.once("removed", () => {
+                    let idx = this.controls.indexOf(control);
+                    if (idx != -1) {
+                        this.controls.splice(idx, 1);
+                    }
+                });
                 player.add(camera);
                 player.add(this.audioListener);
             }
+            scene.add(player);
 
             const updatePlayerColor = (color: string) => {
                 player.setColor(new THREE.Color(color));
             };
 
             const updatePlayerPos = (pos: Vec2) => {
-                player.updatePos(pos, model.myId);
+                if (!(player instanceof MainPlayer)) {
+                    player.updatePosition(pos);
+                }
                 this.drawParticles(player, pos);
             };
-            updatePlayerColor(n.getColor());
             n.on("color", updatePlayerColor);
-            // Is my player?
+            updatePlayerColor(n.getColor());
             n.on("position", updatePlayerPos);
             updatePlayerPos(n.getPos());
 
@@ -94,14 +107,7 @@ export class Viewport {
                 // delete the P5 player
                 this.scene.remove(player);
                 player.dispose();
-
-                if (model.myId === n.Id()) {
-                    this.playerControl.dispose();
-                    this.playerControl = undefined;
-                }
             });
-            scene.add(player);
-            World.add(engine.world, player.body);
         });
     }
 
@@ -128,9 +134,7 @@ export class Viewport {
     animate(time: number = 0) {
         requestAnimationFrame(this.animate.bind(this));
 
-        if (this.playerControl) {
-            this.playerControl.update();
-        }
+        this.controls.forEach((control) => control.update(time));
 
         this.particleSystem.update(this.clock.getElapsedTime());
 
@@ -140,11 +144,9 @@ export class Viewport {
             }
         });
 
-        // (engine as any).update(time);
-        // Engine.update(engine, time);
         //render
+        // Engine.update(engine, time);
         renderer.render(scene, camera);
-        // renderer2.render(scene2, camera);
     }
 }
 
@@ -200,18 +202,42 @@ function initUI(target: HTMLElement) {
     const wallThickness = 20;
     // scene code
     World.add(engine.world, [
-        Bodies.rectangle(0, gridSize / 2 + wallThickness / 2, gridSize, wallThickness, {
-            isStatic: true,
-        }), // Top
-        Bodies.rectangle(0, -(gridSize / 2) - wallThickness / 2, gridSize, wallThickness, {
-            isStatic: true,
-        }), // Bottom
-        Bodies.rectangle(-(gridSize / 2) - wallThickness / 2, 0, wallThickness, gridSize, {
-            isStatic: true,
-        }), // left
-        Bodies.rectangle(gridSize / 2 + wallThickness / 2, 0, wallThickness, gridSize, {
-            isStatic: true,
-        }), // Right
+        Bodies.rectangle(
+            0,
+            gridSize / 2 + wallThickness / 2,
+            gridSize,
+            wallThickness,
+            {
+                isStatic: true,
+            }
+        ), // Top
+        Bodies.rectangle(
+            0,
+            -(gridSize / 2) - wallThickness / 2,
+            gridSize,
+            wallThickness,
+            {
+                isStatic: true,
+            }
+        ), // Bottom
+        Bodies.rectangle(
+            -(gridSize / 2) - wallThickness / 2,
+            0,
+            wallThickness,
+            gridSize,
+            {
+                isStatic: true,
+            }
+        ), // left
+        Bodies.rectangle(
+            gridSize / 2 + wallThickness / 2,
+            0,
+            wallThickness,
+            gridSize,
+            {
+                isStatic: true,
+            }
+        ), // Right
     ]);
 
     target.appendChild(renderer.domElement);

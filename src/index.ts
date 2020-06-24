@@ -25,6 +25,7 @@ async function init() {
 
     console.log("starting");
     const audioBroker = new AudioBroker(localAudioStream, model, iceServers);
+    await audioBroker.init();
 
     var socket = io({
         host: location.hostname,
@@ -42,8 +43,6 @@ async function init() {
         // This event can happen multiple times, in the beginning or if the network disconnects the user momentarily
         // In the second case, the audioBroker has to be reinitialized.
         // TODO: Reinitiate peerjs, check if id would change
-
-        await audioBroker.init();
 
         const peerId = audioBroker.peerID;
         console.log("My peer ID is: " + peerId);

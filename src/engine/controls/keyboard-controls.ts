@@ -1,4 +1,4 @@
-import { Player } from "../player";
+import { MainPlayer } from "../player";
 import THREE = require("three");
 import { Body, Vector } from "matter-js";
 
@@ -20,7 +20,7 @@ export class KeyboardControls {
     private _onKeyDown = this.onKeyDown.bind(this);
 
     constructor(
-        private target: Player,
+        private target: MainPlayer,
         private camera: THREE.OrthographicCamera
     ) {
         window.addEventListener("keyup", this._onKeyUp, false);

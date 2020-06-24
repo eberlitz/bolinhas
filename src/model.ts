@@ -37,6 +37,10 @@ export class Model extends EventEmitter {
     GetNode(id: string) {
         return this.nodesMap[id];
     }
+
+    IsMainPlayer(n: ModelNode): boolean {
+        return n.Id() === this.myId
+    }
 }
 
 export type Vec2 = [number, number];

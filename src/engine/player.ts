@@ -20,24 +20,12 @@ export class Player extends THREE.Group {
     _onMediaStream = this.onMediaStream.bind(this);
     ripple: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial>;
     sound: THREE.Audio<GainNode>;
-    body: Matter.Body;
 
     constructor(
         public node: ModelNode,
         private audioListener: THREE.AudioListener
     ) {
         super();
-
-        const [x, y] = node.getPos();
-        this.body = Bodies.circle(x, y, 5, {
-            // frictionStatic: 0.1,
-            // friction: 0.1,
-            frictionAir: 0.1,
-            restitution: 0.5,
-            density: 0.1,
-        });
-        (window as any).Body = Body;
-        (window as any).body = this.body;
 
         const color = new THREE.Color(node.getColor());
         const radius = 5;
@@ -111,11 +99,9 @@ export class Player extends THREE.Group {
         // this.analyser.getAverageFrequency();
     }
 
-    updatePos(pos: Vec2, mainId: string) {
-        if (mainId !== this.node.Id()) {
-            this.position.x = pos[0];
-            this.position.y = pos[1];
-        }
+    updatePosition(pos: Vec2) {
+        this.position.x = pos[0];
+        this.position.y = pos[1];
     }
 
     setColor(color: THREE.Color) {
@@ -124,16 +110,6 @@ export class Player extends THREE.Group {
     }
 
     update(time: number) {
-        const { x, y } = this.body.position;
-        this.position.set(
-            roundFloatTo3decimals(x),
-            roundFloatTo3decimals(y),
-            0
-        );
-
-        // Update player position
-        this.node.setPos([this.position.x, this.position.y]);
-
         if (this.analyser) {
             let avg = this.analyser.getAverageFrequency();
             // console.log(avg);
@@ -172,6 +148,43 @@ export class Player extends THREE.Group {
 
     dispose() {
         this.node.removeListener("stream", this._onMediaStream);
+    }
+}
+
+// MainPlayer has physics
+export class MainPlayer extends Player {
+    body: Matter.Body;
+
+    constructor(node: ModelNode, audioListener: THREE.AudioListener) {
+        super(node, audioListener);
+        this._init();
+    }
+
+    private _init() {
+        const [x, y] = this.node.getPos();
+        this.body = Bodies.circle(x, y, 5, {
+            // frictionStatic: 0.1,
+            // friction: 0.1,
+            frictionAir: 0.1,
+            restitution: 0.5,
+            density: 0.1,
+        });
+        (window as any).Body = Body;
+        (window as any).body = this.body;
+    }
+
+    update(time: number) {
+        const { x, y } = this.body.position;
+        this.position.set(
+            roundFloatTo3decimals(x),
+            roundFloatTo3decimals(y),
+            0
+        );
+        // Update player position
+        // TODO: Maybe this should be in the mainplayer-controls
+        this.node.setPos([this.position.x, this.position.y]);
+
+        super.update(time);
     }
 }
 
