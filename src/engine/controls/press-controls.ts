@@ -1,6 +1,5 @@
 import { Player } from "../player";
 import THREE = require("three");
-import { Accelerator } from "./accelerator";
 import { Vector, Body } from "matter-js";
 import { controlsOpts } from "./keyboard-controls";
 
@@ -10,6 +9,8 @@ export class PressControls {
     private raycaster = new THREE.Raycaster();
     private basePlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
     private pressed = false;
+    private originalOnContextMenu = document.oncontextmenu;
+    private newOnContextMenu = new Function("return false") as typeof document.oncontextmenu;
     constructor(private target: Player, private scene: THREE.Scene, private camera: THREE.Camera) {
         // super();
         if('ontouchstart' in document.documentElement){
@@ -27,10 +28,12 @@ export class PressControls {
         this.updateForce(event.clientX, event.clientY);
     }
     onTouchStart = (event: TouchEvent) => {
+        document.oncontextmenu = this.newOnContextMenu;;
         this.pressed = true;
         this.updateForce(event.touches[0].clientX, event.touches[0].clientY);
     }
     stopMove = () => {
+        document.oncontextmenu = this.originalOnContextMenu;
         this.pressed = false;
         this.force = undefined;
     }
@@ -52,9 +55,6 @@ export class PressControls {
 
         this.force = this.pos.clone().sub(this.target.position);
         this.force.setLength(controlsOpts.playerForce);
-
-        const v = Vector.create(this.force.x, this.force.y)
-        Body.applyForce(this.target.body, Vector.clone(this.target.body.position), v);
     }
 
     private updateMousePos(x: number, y: number) {
@@ -72,18 +72,10 @@ export class PressControls {
     }
 
     update() {
-        // Update Player position
-
-        // if (this.force) {
-        //     this.applyForce(this.force)
-        // }
-        // super.update();
-        // this.target.position.copy(this.position);
-
-        // this.target.node.setPos([
-        //     this.target.position.x,
-        //     this.target.position.y,
-        // ]);
+        if(this.force){
+            const v = Vector.create(this.force.x, this.force.y)
+            Body.applyForce(this.target.body, Vector.clone(this.target.body.position), v);
+        }
     }
 
     onTouchEnd = (evt: KeyboardEvent) => {
