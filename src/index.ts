@@ -23,8 +23,6 @@ async function init() {
     var model = new Model();
     initMenu(model);
 
-    
-
     console.log("starting");
     const audioBroker = new AudioBroker(localAudioStream, model, iceServers);
 
@@ -45,8 +43,7 @@ async function init() {
         // In the second case, the audioBroker has to be reinitialized.
         // TODO: Reinitiate peerjs, check if id would change
 
-
-        await audioBroker.init()
+        await audioBroker.init();
 
         const peerId = audioBroker.peerID;
         console.log("My peer ID is: " + peerId);

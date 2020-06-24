@@ -1,19 +1,26 @@
-import { Player } from "../player";
 import THREE = require("three");
-import { Accelerator } from "./accelerator";
+import { Vector, Body } from "matter-js";
 
-export const PLAYER_SPEED = 1;
-export const PLAYER_FORCE = 0.4;
+import { Player } from "../player";
+import { controlsOpts } from "./keyboard-controls";
 
-export class PressControls extends Accelerator {
+export class PressControls {
     private pos = new THREE.Vector3(); // create once and reuse
     private force?: THREE.Vector3;
     private raycaster = new THREE.Raycaster();
     private basePlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
     private pressed = false;
-    constructor(private target: Player, private scene: THREE.Scene, private camera: THREE.Camera) {
-        super();
-        if('ontouchstart' in document.documentElement){
+    private originalOnContextMenu = document.oncontextmenu;
+    private newOnContextMenu = new Function(
+        "return false"
+    ) as typeof document.oncontextmenu;
+
+    constructor(
+        private target: Player,
+        private scene: THREE.Scene,
+        private camera: THREE.Camera
+    ) {
+        if ("ontouchstart" in document.documentElement) {
             window.addEventListener("touchstart", this.onTouchStart);
             window.addEventListener("touchmove", this.onTouchMove);
             window.addEventListener("touchend", this.stopMove);
@@ -26,39 +33,47 @@ export class PressControls extends Accelerator {
     onMouseDown = (event: MouseEvent) => {
         this.pressed = true;
         this.updateForce(event.clientX, event.clientY);
-    }
+    };
+
     onTouchStart = (event: TouchEvent) => {
+        document.oncontextmenu = this.newOnContextMenu;
         this.pressed = true;
         this.updateForce(event.touches[0].clientX, event.touches[0].clientY);
-    }
+    };
+
     stopMove = () => {
+        document.oncontextmenu = this.originalOnContextMenu;
         this.pressed = false;
         this.force = undefined;
-    }
+    };
 
     onMouseMove = (event: MouseEvent) => {
-        if(this.pressed){
-            this.updateForce(event.clientX, event.clientY)
+        if (this.pressed) {
+            this.updateForce(event.clientX, event.clientY);
         }
-    }
+    };
 
     onTouchMove = (event: TouchEvent) => {
-        if(this.pressed){
-            this.updateForce(event.touches[0].clientX, event.touches[0].clientY)
+        if (this.pressed) {
+            this.updateForce(
+                event.touches[0].clientX,
+                event.touches[0].clientY
+            );
         }
-    }
+    };
 
     private updateForce(x: number, y: number) {
         this.updateMousePos(x, y);
         this.force = this.pos.clone().sub(this.target.position);
-        this.force.setLength(PLAYER_FORCE);
+        this.force.setLength(controlsOpts.playerForce);
     }
 
     private updateMousePos(x: number, y: number) {
         var mv = new THREE.Vector3(
             (x / window.innerWidth) * 2 - 1,
             -(y / window.innerHeight) * 2 + 1,
-            0.5);
+            0.5
+        );
         this.raycaster.setFromCamera(mv.clone(), this.camera);
         this.raycaster.ray.intersectPlane(this.basePlane, this.pos);
     }
@@ -69,18 +84,14 @@ export class PressControls extends Accelerator {
     }
 
     update() {
-        // Update Player position
-
         if (this.force) {
-            this.applyForce(this.force)
+            const v = Vector.create(this.force.x, this.force.y);
+            Body.applyForce(
+                this.target.body,
+                Vector.clone(this.target.body.position),
+                v
+            );
         }
-        super.update();
-        this.target.position.copy(this.position);
-
-        this.target.node.setPos([
-            this.target.position.x,
-            this.target.position.y,
-        ]);
     }
 
     onTouchEnd = (evt: KeyboardEvent) => {
@@ -88,5 +99,5 @@ export class PressControls extends Accelerator {
         if (prevent) {
             evt.preventDefault();
         }
-    }
+    };
 }

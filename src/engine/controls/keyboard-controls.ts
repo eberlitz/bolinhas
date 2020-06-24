@@ -1,11 +1,13 @@
 import { Player } from "../player";
 import THREE = require("three");
-import { Accelerator } from "./accelerator";
+import { Body, Vector } from "matter-js";
 
-export const PLAYER_SPEED = 1;
-export const PLAYER_FORCE = 0.4;
+export const controlsOpts = {
+    playerForce: 0.005,
+};
+(window as any).controlsOpts = controlsOpts;
 
-export class KeyboardControls extends Accelerator {
+export class KeyboardControls {
     state = {
         left: 0,
         right: 0,
@@ -17,8 +19,10 @@ export class KeyboardControls extends Accelerator {
     private _onKeyUp = this.onKeyUp.bind(this);
     private _onKeyDown = this.onKeyDown.bind(this);
 
-    constructor(private target: Player, private camera: THREE.OrthographicCamera) {
-        super();
+    constructor(
+        private target: Player,
+        private camera: THREE.OrthographicCamera
+    ) {
         window.addEventListener("keyup", this._onKeyUp, false);
         window.addEventListener("keydown", this._onKeyDown, false);
     }
@@ -34,19 +38,28 @@ export class KeyboardControls extends Accelerator {
         const deltaX = this.state.right - this.state.left;
         const deltaY = this.state.up - this.state.down;
 
-        // TO lock the camera as the user moves, without adding the camera to the player group
+        const v = Vector.mult(
+            Vector.normalise(Vector.create(deltaX, deltaY)),
+            controlsOpts.playerForce
+        );
 
-        const force = new THREE.Vector3(deltaX, deltaY);
-        force.setLength(PLAYER_FORCE);
+        Body.applyForce(
+            this.target.body,
+            Vector.clone(this.target.body.position),
+            v
+        );
 
-        this.applyForce(force);
-        super.update();
-        this.target.position.copy(this.position);
+        // const force = new THREE.Vector3(deltaX, deltaY);
+        // force.setLength(PLAYER_FORCE);
 
-        this.target.node.setPos([
-            this.target.position.x,
-            this.target.position.y,
-        ]);
+        // this.applyForce(force);
+        // super.update();
+        // this.target.position.copy(this.position);
+
+        // this.target.node.setPos([
+        //     this.target.position.x,
+        //     this.target.position.y,
+        // ]);
 
         // this.camera.position.x = this.position.x;
         // this.camera.position.y = this.position.y;

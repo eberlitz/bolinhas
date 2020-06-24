@@ -1,20 +1,26 @@
 import * as THREE from "three";
-import { Model, ModelNode, Vec2 } from "../model";
+import * as Matter from "matter-js";
+import { Bodies, Engine, World } from "matter-js";
 
 import "../lib/GPUParticleSystem";
+import { Model, ModelNode, Vec2 } from "../model";
+import particleUrl from "../textures/particle2.png";
+import perlinUrl from "../textures/perlin-512.png";
+import { Player } from "./player";
+import { PressControls } from "./controls/press-controls";
+import { KeyboardControls } from "./controls/keyboard-controls";
 
 declare module "three" {
     let GPUParticleSystem: any;
 }
 // import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
-import particleUrl from "../textures/particle2.png";
-import perlinUrl from "../textures/perlin-512.png";
-import { Player } from "./player";
-import { PressControls } from "./controls/press-controls";
-import { KeyboardControls } from "./controls/keyboard-controls";
-import { Accelerator } from "./controls/accelerator";
-import { PlayerControl } from "./controls/controls";
+// create a Matter.js engine
+const engine = Engine.create({
+    render: { visible: false },
+} as Matter.IEngineDefinition);
+engine.world.gravity.y = 0;
+engine.world.gravity.x = 0;
 
 const defaultParticleOpts = {
     positionRandomness: 0.9,
@@ -35,7 +41,7 @@ let renderer: THREE.WebGLRenderer;
 const target = document.getElementById("viewport");
 
 export class Viewport {
-    private playerControl?: PlayerControl;
+    private playerControl: KeyboardControls | PressControls;
     private clock = new THREE.Clock();
     audioListener = new THREE.AudioListener();
 
@@ -53,7 +59,6 @@ export class Viewport {
 
     setModel(model: Model) {
         model.on("added", (n) => {
-
             const player = new Player(n, this.audioListener);
             if (model.myId === n.Id()) {
                 if ("ontouchstart" in document.documentElement) {
@@ -96,6 +101,7 @@ export class Viewport {
                 }
             });
             scene.add(player);
+            World.add(engine.world, player.body);
         });
     }
 
@@ -134,6 +140,8 @@ export class Viewport {
             }
         });
 
+        // (engine as any).update(time);
+        // Engine.update(engine, time);
         //render
         renderer.render(scene, camera);
         // renderer2.render(scene2, camera);
@@ -177,10 +185,10 @@ function initUI(target: HTMLElement) {
     scene.add(directionalLight);
     scene.add(light);
 
-    var size = 1000;
+    var gridSize = 1000;
     var divisions = 50;
     const ground = new THREE.GridHelper(
-        size,
+        gridSize,
         divisions,
         new THREE.Color(0x14a0e6),
         new THREE.Color(0x1e8bc3)
@@ -189,6 +197,23 @@ function initUI(target: HTMLElement) {
     ground.position.set(0, 0, -1);
     scene.add(ground);
 
+    const wallThickness = 20;
+    // scene code
+    World.add(engine.world, [
+        Bodies.rectangle(0, gridSize / 2 + wallThickness / 2, gridSize, wallThickness, {
+            isStatic: true,
+        }), // Top
+        Bodies.rectangle(0, -(gridSize / 2) - wallThickness / 2, gridSize, wallThickness, {
+            isStatic: true,
+        }), // Bottom
+        Bodies.rectangle(-(gridSize / 2) - wallThickness / 2, 0, wallThickness, gridSize, {
+            isStatic: true,
+        }), // left
+        Bodies.rectangle(gridSize / 2 + wallThickness / 2, 0, wallThickness, gridSize, {
+            isStatic: true,
+        }), // Right
+    ]);
+
     target.appendChild(renderer.domElement);
 
     // const controls = new OrbitControls(camera, renderer.domElement);
@@ -196,6 +221,8 @@ function initUI(target: HTMLElement) {
     // controls.maxZoom = 2;
 
     const vp = new Viewport(scene);
+    // run the engine
+    Engine.run(engine);
     vp.animate();
 
     return vp;

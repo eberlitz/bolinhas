@@ -1,5 +1,6 @@
 import THREE = require("three");
-import { PLAYER_SPEED } from "./press-controls";
+
+export const PLAYER_SPEED = 1;
 
 export class Accelerator {
     public position = new THREE.Vector3();
