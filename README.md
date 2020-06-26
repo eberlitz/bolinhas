@@ -18,6 +18,6 @@ Production:
 
 Staging:
 
-* https://bolinhas.azurewebsites.net/
+* https://staging-bol.azurewebsites.net/
 * Branch: staging-az
 * Deploy cmd: `sh ./deploy.sh staging-az`
