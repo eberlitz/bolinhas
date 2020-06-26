@@ -1,6 +1,23 @@
+## Local Development
 
-Still in development. For now, you can run it with `npm run server`. After opening a window, just share the URL with others to edit the same document.
+Just run the command bellow, it will start a server and listen for file changes and recompile then.
 
-- [ ] We need to send all the initial positions/otherusersdata for a new user that joins. 
-- [ ] Make the volume be relative to distance.
-- [ ] Refactor
+```sh
+node server.js
+```
+
+## Deploying
+
+Currently there is two environments.
+
+Production:
+
+* https://bolinhas.azurewebsites.net/
+* Branch: azure
+* Deploy cmd: `sh ./deploy.sh azure`
+
+Staging:
+
+* https://bolinhas.azurewebsites.net/
+* Branch: staging-az
+* Deploy cmd: `sh ./deploy.sh staging-az`
