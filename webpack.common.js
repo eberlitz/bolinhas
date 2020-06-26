@@ -46,6 +46,7 @@ module.exports = {
   entry: {
     app: "./src/index.ts",
     landing: "./src/landing/index.ts",
+    notsupported: "./src/notsupported/index.ts",
   },
   output: {
     globalObject: "self",
@@ -68,8 +69,14 @@ module.exports = {
       chunks: ["app"],
     }),
     new HtmlWebpackPlugin({
+      filename: "not-supported.html",
+      title: "bolinhas",
+      template: "./src/notsupported/not-supported.html",
+      chunks: ["notsupported"],
+    }),
+    new HtmlWebpackPlugin({
       filename: "landing.html",
-      title: "Bolinhas",
+      title: "bolinhas",
       template: "./src/landing/landing.html",
       chunks: ["landing"],
     }),

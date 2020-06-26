@@ -62,6 +62,10 @@ app.get("/", function (req, res, next) {
   // res.sendFile(path.join(public, ));
 });
 
+app.get("/not-supported", (_, res, next) => {
+  sendFile("not-supported.html", res, next);
+});
+
 app.get("/join/", function (req, res) {
   res.redirect("/");
 });

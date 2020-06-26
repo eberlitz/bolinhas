@@ -3,6 +3,7 @@ import * as io from "socket.io-client";
 import { requestAudio, AudioBroker } from "./audiopeer";
 import { Model, ModelNode, ModelNodeJSON } from "./model";
 import { viewport } from "./engine/ui";
+import { checkRTCSupport } from "./notsupported";
 
 document.addEventListener(
     "DOMContentLoaded",
@@ -13,6 +14,11 @@ document.addEventListener(
 );
 
 async function init() {
+    const reason = checkRTCSupport();
+    if (reason) {
+        window.location.href = "/not-supported";
+        return
+    }
     const url = window.location.href;
     const room = url.substring(url.lastIndexOf("/") + 1).toLowerCase();
     console.log("Room: ", room);
