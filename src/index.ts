@@ -14,11 +14,13 @@ document.addEventListener(
 );
 
 async function init() {
-    const reason = checkRTCSupport();
-    if (reason) {
+    try {
+        await checkRTCSupport();
+    } catch (error) {
         window.location.href = "/not-supported";
-        return
+        return;
     }
+
     const url = window.location.href;
     const room = url.substring(url.lastIndexOf("/") + 1).toLowerCase();
     console.log("Room: ", room);
