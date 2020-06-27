@@ -9,10 +9,8 @@ import perlinUrl from "../textures/perlin-512.png";
 import { Player, MainPlayer } from "./player";
 import { PressControls } from "./controls/press-controls";
 import { KeyboardControls } from "./controls/keyboard-controls";
+import { GPUParticleSystem, ParticleOptions } from "../lib/GPUParticleSystem";
 
-declare module "three" {
-    let GPUParticleSystem: any;
-}
 // import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 // create a Matter.js engine
@@ -32,7 +30,7 @@ const defaultParticleOpts = {
     lifetime: 4,
     size: 20,
     sizeRandomness: 0,
-};
+} as ParticleOptions;
 
 let camera: THREE.OrthographicCamera;
 let scene: THREE.Scene;
@@ -47,12 +45,12 @@ export interface Updater {
 export class Viewport {
     private clock = new THREE.Clock();
     audioListener = new THREE.AudioListener();
-    particleSystem: any;
+    particleSystem: GPUParticleSystem;
     private controls: Updater[] = [];
 
     constructor(private scene: THREE.Scene) {
         var textureLoader = new THREE.TextureLoader();
-        this.particleSystem = new THREE.GPUParticleSystem({
+        this.particleSystem = new GPUParticleSystem({
             maxParticles: 250000,
             particleNoiseTex: textureLoader.load(perlinUrl),
             particleSpriteTex: textureLoader.load(particleUrl),
@@ -126,7 +124,7 @@ export class Viewport {
                         player.position.y,
                         0
                     ),
-                })
+                } as ParticleOptions)
             );
         }
     }
