@@ -102,6 +102,7 @@ export class Player extends THREE.Group {
     updatePosition(pos: Vec2) {
         this.position.x = pos[0];
         this.position.y = pos[1];
+        this._updateSoundVolume();
     }
 
     setColor(color: THREE.Color) {
@@ -120,7 +121,13 @@ export class Player extends THREE.Group {
             this.ripple.scale.x = 4 * avg;
             this.ripple.scale.y = 4 * avg;
         }
+    }
 
+    dispose() {
+        this.node.removeListener("stream", this._onMediaStream);
+    }
+
+    private _updateSoundVolume() {
         if (this.sound) {
             var distance = this.getWorldPosition(
                 new THREE.Vector3()
@@ -144,10 +151,6 @@ export class Player extends THREE.Group {
             this.sound.getOutput().gain.value = Math.max(gain, 0);
             // this.sound.setVolume(Math.max(gain, 0));
         }
-    }
-
-    dispose() {
-        this.node.removeListener("stream", this._onMediaStream);
     }
 }
 
