@@ -133,7 +133,23 @@ app.get(
       return;
     }
     const twilioClient = require("twilio")(accountSid, authToken);
-    const { iceServers } = await twilioClient.tokens.create();
+    let { iceServers } = await twilioClient.tokens.create();
+    iceServers = [
+      // All tested with https://webrtc.github.io/samples/src/content/peerconnection/trickle-ice/
+      { url: "stun:stun.l.google.com:19302" },
+      { url: "stun:stun1.l.google.com:19302" },
+      { url: "stun:stun2.l.google.com:19302" },
+      { url: "stun:stun3.l.google.com:19302" },
+      { url: "stun:stun4.l.google.com:19302" },
+      { url: "stun:stun.xten.com" },
+      { url: "stun:stun.ekiga.net" },
+      { url: "stun:stun.ideasip.com" },
+      { url: "stun:stun.voiparound.com" },
+      { url: "stun:stun.voipbuster.com" },
+      { url: "stun:stun.voipstunt.com" },
+      // { url: "stun:stun.schlund.de" },
+      ...iceServers,
+    ];
     res.json(iceServers);
   })
 );
