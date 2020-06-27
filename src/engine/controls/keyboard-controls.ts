@@ -77,9 +77,7 @@ export class KeyboardControls {
     }
 
     onKeyDown(evt: KeyboardEvent) {
-        if (this.audioListener?.context.state !== "running") {
-            startContext(this.audioListener.context)
-        }
+        startContext(this.audioListener.context);
         let prevent = false;
         if (evt.target !== document.getElementById("viewport")) {
             return;
@@ -114,9 +112,7 @@ export class KeyboardControls {
     }
 
     onKeyUp(evt: KeyboardEvent) {
-        if (this.audioListener?.context.state !== "running") {
-            startContext(this.audioListener.context)
-        }
+        startContext(this.audioListener.context);
         let prevent = true;
         switch (evt.key) {
             case "d":

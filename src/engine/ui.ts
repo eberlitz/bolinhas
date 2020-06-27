@@ -9,6 +9,7 @@ import { Player, MainPlayer } from "./player";
 import { PressControls } from "./controls/press-controls";
 import { KeyboardControls } from "./controls/keyboard-controls";
 import { GPUParticleSystem, ParticleOptions } from "../lib/GPUParticleSystem";
+import { startContext } from "./helpers";
 
 // import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
@@ -54,6 +55,7 @@ export class Viewport {
             particleSpriteTex: textureLoader.load(particleUrl),
         });
         this.scene.add(this.particleSystem);
+        startAudioContext(this.audioListener.context);
     }
 
     setModel(model: Model) {
@@ -260,3 +262,28 @@ function initUI(target: HTMLElement) {
 }
 
 export const viewport = initUI(target);
+
+function startAudioContext(context: AudioContext) {
+    const overlayEl = document.getElementById("overlay");
+    if (!overlayEl) {
+        return;
+    }
+    let dragged = false;
+    const ended = () => {
+        if (!dragged) {
+            overlayEl.removeEventListener("touchstart", ended);
+            overlayEl.removeEventListener("touchmove", moved);
+            overlayEl.removeEventListener("touchend", ended);
+            overlayEl.removeEventListener("mouseup", ended);
+            startContext(context);
+        }
+        dragged = false;
+    };
+    const moved = () => {
+        dragged = true;
+    };
+    overlayEl.addEventListener("touchstart", ended);
+    overlayEl.addEventListener("touchmove", moved);
+    overlayEl.addEventListener("touchend", ended);
+    overlayEl.addEventListener("mouseup", ended);
+}

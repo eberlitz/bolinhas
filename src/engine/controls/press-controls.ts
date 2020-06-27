@@ -33,20 +33,20 @@ export class PressControls {
         }
     }
     onMouseDown = (event: MouseEvent) => {
-        this.dragEnd()
+        this.dragEnd();
         this.pressed = true;
         this.updateForce(event.clientX, event.clientY);
     };
 
     onTouchStart = (event: TouchEvent) => {
-        this.dragEnd()
+        this.dragEnd();
         document.oncontextmenu = this.newOnContextMenu;
         this.pressed = true;
         this.updateForce(event.touches[0].clientX, event.touches[0].clientY);
     };
 
     stopMove = () => {
-        this.dragEnd()
+        this.dragEnd();
         document.oncontextmenu = this.originalOnContextMenu;
         this.pressed = false;
         this.force = undefined;
@@ -112,9 +112,7 @@ export class PressControls {
 
     private dragEnd() {
         if (!this._dragged) {
-            if (this.audioListener?.context.state !== "running") {
-                startContext(this.audioListener.context);
-            }
+            startContext(this.audioListener.context);
         }
         this._dragged = false;
     }

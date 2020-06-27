@@ -34,7 +34,7 @@ body {
   }
 }
 
-.main-player-item{
+.main-player-item {
   input {
     display: inline-block;
     width: 100px;
@@ -66,4 +66,18 @@ video {
     height: 100px;
     top: auto;
   }
+}
+
+div#overlay {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: wheat;
+  border-radius: 2%;
 }
