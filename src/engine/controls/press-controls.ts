@@ -3,6 +3,7 @@ import { Vector, Body } from "matter-js";
 
 import { MainPlayer } from "../player";
 import { controlsOpts } from "./keyboard-controls";
+import { startContext } from "../helpers";
 
 export class PressControls {
     private pos = new THREE.Vector3(); // create once and reuse
@@ -14,10 +15,12 @@ export class PressControls {
     private newOnContextMenu = new Function(
         "return false"
     ) as typeof document.oncontextmenu;
+    private _dragged: boolean = false;
 
     constructor(
         private target: MainPlayer,
-        private camera: THREE.Camera
+        private camera: THREE.Camera,
+        private audioListener: THREE.AudioListener
     ) {
         if ("ontouchstart" in document.documentElement) {
             window.addEventListener("touchstart", this.onTouchStart);
@@ -30,29 +33,36 @@ export class PressControls {
         }
     }
     onMouseDown = (event: MouseEvent) => {
+        this.dragEnd()
         this.pressed = true;
         this.updateForce(event.clientX, event.clientY);
     };
 
     onTouchStart = (event: TouchEvent) => {
+        this.dragEnd()
         document.oncontextmenu = this.newOnContextMenu;
         this.pressed = true;
         this.updateForce(event.touches[0].clientX, event.touches[0].clientY);
     };
 
     stopMove = () => {
+        this.dragEnd()
         document.oncontextmenu = this.originalOnContextMenu;
         this.pressed = false;
         this.force = undefined;
     };
 
     onMouseMove = (event: MouseEvent) => {
+        this._dragged = true;
+
         if (this.pressed) {
             this.updateForce(event.clientX, event.clientY);
         }
     };
 
     onTouchMove = (event: TouchEvent) => {
+        this._dragged = true;
+
         if (this.pressed) {
             this.updateForce(
                 event.touches[0].clientX,
@@ -99,4 +109,13 @@ export class PressControls {
             evt.preventDefault();
         }
     };
+
+    private dragEnd() {
+        if (!this._dragged) {
+            if (this.audioListener?.context.state !== "running") {
+                startContext(this.audioListener.context);
+            }
+        }
+        this._dragged = false;
+    }
 }

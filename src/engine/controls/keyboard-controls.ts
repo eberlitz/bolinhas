@@ -1,6 +1,7 @@
 import { MainPlayer } from "../player";
 import THREE = require("three");
 import { Body, Vector } from "matter-js";
+import { startContext } from "../helpers";
 
 export const controlsOpts = {
     playerForce: 0.005,
@@ -21,7 +22,8 @@ export class KeyboardControls {
 
     constructor(
         private target: MainPlayer,
-        private camera: THREE.OrthographicCamera
+        private camera: THREE.OrthographicCamera,
+        private audioListener: THREE.AudioListener
     ) {
         window.addEventListener("keyup", this._onKeyUp, false);
         window.addEventListener("keydown", this._onKeyDown, false);
@@ -75,6 +77,9 @@ export class KeyboardControls {
     }
 
     onKeyDown(evt: KeyboardEvent) {
+        if (this.audioListener?.context.state !== "running") {
+            startContext(this.audioListener.context)
+        }
         let prevent = false;
         if (evt.target !== document.getElementById("viewport")) {
             return;
@@ -109,6 +114,9 @@ export class KeyboardControls {
     }
 
     onKeyUp(evt: KeyboardEvent) {
+        if (this.audioListener?.context.state !== "running") {
+            startContext(this.audioListener.context)
+        }
         let prevent = true;
         switch (evt.key) {
             case "d":

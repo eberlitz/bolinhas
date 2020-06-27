@@ -68,9 +68,17 @@ export class Viewport {
                 World.add(engine.world, player.body);
                 let control: Updater;
                 if ("ontouchstart" in document.documentElement) {
-                    control = new PressControls(player, camera);
+                    control = new PressControls(
+                        player,
+                        camera,
+                        this.audioListener
+                    );
                 } else {
-                    control = new KeyboardControls(player, camera);
+                    control = new KeyboardControls(
+                        player,
+                        camera,
+                        this.audioListener
+                    );
                 }
                 this.controls.push(control);
                 n.once("removed", () => {
