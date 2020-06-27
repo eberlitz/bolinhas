@@ -15,11 +15,12 @@ const audioDistanceModel = {
 export class Player extends THREE.Group {
     private material!: THREE.MeshBasicMaterial;
     public oldPos: Vec2 = [0, 0];
-    analyser: THREE.AudioAnalyser;
+    private analyser: THREE.AudioAnalyser;
 
-    _onMediaStream = this.onMediaStream.bind(this);
-    ripple: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial>;
-    sound: THREE.Audio<GainNode>;
+    private _onMediaStream = this.onMediaStream.bind(this);
+    private ripple: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial>;
+    private sound: THREE.Audio<GainNode>;
+    private audioEl = new Audio();
 
     constructor(
         public node: ModelNode,
@@ -56,14 +57,14 @@ export class Player extends THREE.Group {
             this.analyser = null;
             return;
         }
-        const audioEl = new Audio();
-        // audioEl.autoplay = true;
+        // workaround for: https://bugs.chromium.org/p/chromium/issues/detail?id=687574
+        // Sample from https://github.com/mozilla/hubs/blob/0c26af207bbbc3983409cdab7210b219b53449ca/src/systems/audio-system.js
         // Older browsers may not have srcObject
-        if (("srcObject" in audioEl) as any) {
-            audioEl.srcObject = stream;
+        if (("srcObject" in this.audioEl) as any) {
+            this.audioEl.srcObject = stream;
         } else {
             // Avoid using this in new browsers, as it is going away.
-            audioEl.src = window.URL.createObjectURL(stream);
+            this.audioEl.src = window.URL.createObjectURL(stream);
         }
 
         var sound = (this.sound = new THREE.Audio(this.audioListener));
@@ -82,6 +83,7 @@ export class Player extends THREE.Group {
         var context = this.audioListener.context;
         var source = context.createMediaStreamSource(stream);
         sound.setNodeSource(source as any);
+        // source.connect(context.destination);
 
         // var oscGain = (this.oscGain = context.createGain());
         // source.connect(oscGain);
@@ -89,10 +91,6 @@ export class Player extends THREE.Group {
         // oscGain.connect(context.destination);
         // oscGain.gain.value = 0;
 
-        sound.autoplay = true;
-        // sound.setMediaStreamSource(stream);
-        // sound.setRefDistance(20);
-        sound.play();
         sound.rotateX(THREE.MathUtils.degToRad(90));
         this.add(sound);
         this.analyser = new THREE.AudioAnalyser(sound, 32);
