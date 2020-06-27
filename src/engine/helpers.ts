@@ -19,10 +19,10 @@ export function startContext(context: AudioContext) {
         }
     }
 
-    const overlayEl = document.getElementById("overlay");
-    if (overlayEl?.parentElement) {
-        overlayEl.parentElement.removeChild(overlayEl);
-        const viewport = document.getElementById("viewport");
-        viewport?.focus();
-    }
+    // const overlayEl = document.getElementById("overlay");
+    // if (overlayEl?.parentElement) {
+    //     overlayEl.parentElement.removeChild(overlayEl);
+    //     const viewport = document.getElementById("viewport");
+    //     viewport?.focus();
+    // }
 }

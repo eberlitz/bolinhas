@@ -7,9 +7,7 @@ import { checkRTCSupport } from "./notsupported";
 
 document.addEventListener(
     "DOMContentLoaded",
-    function (event) {
-        init().catch((err) => console.error(err));
-    },
+    () => init().catch((err) => console.error(err)),
     false
 );
 
@@ -21,9 +19,8 @@ async function init() {
         return;
     }
 
-    const url = window.location.href;
-    const room = url.substring(url.lastIndexOf("/") + 1).toLowerCase();
-    console.log("Room: ", room);
+    removeLoadingSpinner();
+    const room = getRoomName();
 
     const localAudioStream = await requestAudio();
     const iceServers = await fetch("/ice").then((response) => response.json());
@@ -31,7 +28,6 @@ async function init() {
     var model = new Model();
     initMenu(model);
 
-    console.log("starting");
     const audioBroker = new AudioBroker(localAudioStream, model, iceServers);
     await audioBroker.init();
 
@@ -230,4 +226,17 @@ function updatePlayerIndicator(id: string, name: string, color: string) {
     ) as HTMLSpanElement;
     playerNameEl.innerText = name;
     colorEl.style.backgroundColor = color;
+}
+
+function removeLoadingSpinner() {
+    const spinner = document.getElementById("overlay");
+    // const spinner = document.getElementById("spinner");
+    spinner?.parentElement?.removeChild(spinner);
+}
+
+function getRoomName() {
+    const url = window.location.href;
+    const room = url.substring(url.lastIndexOf("/") + 1).toLowerCase();
+    console.log("Room: ", room);
+    return room;
 }

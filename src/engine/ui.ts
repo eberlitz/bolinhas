@@ -55,7 +55,7 @@ export class Viewport {
             particleSpriteTex: textureLoader.load(particleUrl),
         });
         this.scene.add(this.particleSystem);
-        startAudioContext(this.audioListener.context);
+        // startAudioContext(this.audioListener.context);
     }
 
     setModel(model: Model) {
