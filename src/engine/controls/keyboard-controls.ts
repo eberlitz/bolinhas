@@ -6,7 +6,6 @@ import { startContext } from "../helpers";
 export const controlsOpts = {
     playerForce: 0.005,
 };
-(window as any).controlsOpts = controlsOpts;
 
 export class KeyboardControls {
     state = {

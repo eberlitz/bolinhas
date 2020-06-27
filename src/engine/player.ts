@@ -9,8 +9,6 @@ const audioDistanceModel = {
     radius: 150,
     volume: 1,
 };
-// TODO: Remove later, debug only
-(window as any).audioDistanceModel = audioDistanceModel;
 
 export class Player extends THREE.Group {
     private material!: THREE.MeshBasicMaterial;
@@ -170,8 +168,6 @@ export class MainPlayer extends Player {
             restitution: 0.5,
             density: 0.1,
         });
-        (window as any).Body = Body;
-        (window as any).body = this.body;
     }
 
     update(time: number) {
