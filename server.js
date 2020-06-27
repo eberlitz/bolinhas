@@ -26,6 +26,8 @@ io.on("connection", (socket) => {
   let peerId;
   let rooms = [];
 
+  // TODO: Only allow updates for player.id that belongs to the same socket.id in presented in the join.
+
   socket.on("join", (room, player) => {
     peerId = player.id;
     socket.join(room, (err) => {
@@ -41,6 +43,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("update", (room, player) => {
+    !player.id && console.log("EMPTY", player);
     const roomState = (serverState[room] = serverState[room] || {});
     const playerState = (roomState[player.id] = roomState[player.id] || {});
     Object.assign(playerState, player);

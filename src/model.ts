@@ -6,15 +6,12 @@ export declare interface Model {
     on(event: string, listener: Function): this;
 }
 export class Model extends EventEmitter {
-    private nodesMap: { [id: string]: ModelNode } = {};
     public nodes: ModelNode[] = [];
     public me: ModelNode;
-
-    public myId?: string;
+    disconnected: boolean;
 
     Add(n: ModelNode) {
         this.nodes.push(n);
-        this.nodesMap[n.Id()] = n;
         this.emit("added", n);
     }
 
@@ -22,7 +19,6 @@ export class Model extends EventEmitter {
         const idx = this.nodes.indexOf(n);
         if (idx != -1) {
             this.nodes.splice(idx, 1);
-            delete this.nodesMap[n.Id()];
             n.emit("removed", n);
             this.emit("deleted", n);
             return true;
@@ -35,11 +31,11 @@ export class Model extends EventEmitter {
     }
 
     GetNode(id: string) {
-        return this.nodesMap[id];
+        return this.nodes.filter((n) => n.Id() === id)[0];
     }
 
     IsMainPlayer(n: ModelNode): boolean {
-        return n.Id() === this.myId
+        return n === this.me;
     }
 }
 
@@ -75,6 +71,10 @@ export class ModelNode extends EventEmitter {
 
     Id() {
         return this.id;
+    }
+
+    setID(peerId: string) {
+        this.id = peerId;
     }
 
     setPos(pos: Vec2) {

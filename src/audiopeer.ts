@@ -21,7 +21,6 @@ async function screenShare() {
 }
 
 export class AudioBroker {
-    public peerID: string;
     private currentAudioCalls: Map<string, Peer.MediaConnection> = new Map();
     private currentLocalStream: MediaStream;
     private _ongoingPeerPromise?: Promise<Peer>;
@@ -29,8 +28,8 @@ export class AudioBroker {
         if (this._ongoingPeerPromise) {
             return this._ongoingPeerPromise;
         }
-        this._ongoingPeerPromise = this._connectToPeerJS()
-        const peer = await this._ongoingPeerPromise
+        this._ongoingPeerPromise = this._connectToPeerJS();
+        const peer = await this._ongoingPeerPromise;
         return peer;
     };
 
@@ -44,7 +43,15 @@ export class AudioBroker {
 
     init() {
         this._ongoingPeerPromise = null;
+        this.closeAll();
         return this._ensurePeer();
+    }
+
+    private closeAll() {
+        this.currentAudioCalls.forEach((call, pID) => {
+            this.currentAudioCalls.delete(pID);
+            call?.close();
+        });
     }
 
     private _connectToPeerJS() {
@@ -62,11 +69,11 @@ export class AudioBroker {
                 },
                 debug: 1,
             } as Peer.PeerConnectOption) as Peer;
-            peer.on("open", (id) => {
-                if (this.model.myId && this.model.myId !== id) {
-                    console.warn("PeerID HAS CHANGED");
-                }
-                this.model.myId = id;
+            peer.on("open", () => {
+                // if (this.model.myId && this.model.myId !== id) {
+                //     console.warn("PeerID HAS CHANGED");
+                // }
+                // this.model.myId = id;
                 resolve(peer);
             });
             peer.on("error", (err) => {
@@ -100,7 +107,6 @@ export class AudioBroker {
 
                 this.attachOnStream(call, "from_receiving_call");
             });
-            this.peerID = peer.id;
 
             (window as any).startScreenShare = async () => {
                 const stream: MediaStream = await screenShare();

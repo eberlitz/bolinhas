@@ -1,9 +1,10 @@
 import "./style.scss";
-import * as io from "socket.io-client";
 import { requestAudio, AudioBroker } from "./audiopeer";
-import { Model, ModelNode, ModelNodeJSON } from "./model";
+import { Model, ModelNode } from "./model";
 import { viewport } from "./engine/ui";
 import { checkRTCSupport } from "./notsupported";
+import { generateName } from "./lib/name-generator";
+import { initSocket } from "./socket-updater";
 
 document.addEventListener(
     "DOMContentLoaded",
@@ -27,106 +28,39 @@ async function init() {
 
     var model = new Model();
     initMenu(model);
-
-    const audioBroker = new AudioBroker(localAudioStream, model, iceServers);
-    await audioBroker.init();
-
-    var socket = io({
-        host: location.hostname,
-        port:
-            (location.port as any) ||
-            (location.protocol === "https:" ? 443 : 80),
-        path: "/socket",
-        upgrade: false,
-        transports: ["websocket"],
-    });
-
     viewport.setModel(model);
 
-    socket.on("connect", async () => {
-        // This event can happen multiple times, in the beginning or if the network disconnects the user momentarily
-        // In the second case, the audioBroker has to be reinitialized.
-        // TODO: Reinitiate peerjs, check if id would change
+    // Create the Main player node
+    createMainNode(model);
 
-        const peerId = audioBroker.peerID;
-        console.log("My peer ID is: " + peerId);
-
-        let myNode = model.GetNode(peerId);
-        if (!myNode) {
-            myNode = new ModelNode(peerId);
-            myNode.setColor(randomColor(100));
-            let nickname = localStorage.getItem("nickname");
-            if (!nickname) {
-                nickname = myNode.Id().slice(0, 5);
-            }
-            myNode.setNickname(nickname);
-            myNode.on(
-                "updated",
-                throttle((n: ModelNode) => {
-                    // emit updates to the socket.io for any updates on my node.
-                    socket.emit("update", room, n.toJSON());
-                }, 33)
-            );
-            model.Add(myNode);
+    const audioBroker = new AudioBroker(localAudioStream, model, iceServers);
+    // Only adding the option to make calls here, makes easy to create calls, only on updates.
+    // So newly added nodes, would only receive calls.
+    model.on("added", (n) => {
+        // Make audio call to anyone else other than me
+        if (n != model.me) {
+            audioBroker.makeAudioCall(n.Id());
         }
-
-        console.log(`Joining room "${room} ..."`);
-        socket.emit("join", room, myNode.toJSON());
     });
 
-    const updatePlayer = (p: ModelNodeJSON) => {
-        let n = model.GetNode(p.id);
-        if (!n) {
-            n = new ModelNode(p.id);
-            console.log("receiving other node", p.id);
-            n.apply(p);
-            model.Add(n);
-        } else {
-            n.apply(p);
-        }
-    };
+    initSocket(model, audioBroker, room);
+}
 
-    socket.on("init", (data: any) => {
-        console.log('received "init"');
-
-        // If we reconnect we need to cleanup the nodes that are not in the server anymore, as they will get added later
-        model.nodes
-            .filter((n) => n.Id() != audioBroker.peerID && !data[n.Id()])
-            .forEach((n) => model.Delete(n));
-
-        for (const key in data) {
-            if (data.hasOwnProperty(key) && key !== audioBroker.peerID) {
-                const p = data[key] as ModelNodeJSON;
-                console.log("[init]: updating player " + p.id);
-                updatePlayer(p);
-            }
-        }
-
-        // Only adding the option to make calls here, makes easy to create calls, only on updates.
-        // So newly added nodes, would only receive calls.
-        model.on("added", (n) => {
-            // Make audio call to anyone else other than me
-            if (n.Id() != audioBroker.peerID) {
-                audioBroker.makeAudioCall(n.Id());
-            }
-        });
-    });
-
-    socket.on("update", (p: any) => {
-        // console.log('received "update", updating player ' + p.id);
-        updatePlayer(p);
-    });
-
-    socket.on("peer_left", (id: string) => {
-        console.log("left", id);
-        const n = model.GetNode(id);
-        model.Delete(n);
-    });
+function createMainNode(model: Model) {
+    const me = new ModelNode(generateName());
+    model.me = me;
+    me.setColor(randomColor(100));
+    let nickname = localStorage.getItem("nickname");
+    if (!nickname) {
+        nickname = me.Id();
+    }
+    me.setNickname(nickname);
+    model.Add(me);
 }
 
 function initMenu(model: Model) {
     model.on("added", (node) => {
-        if (node.Id() === model.myId) {
+        if (node === model.me) {
             addMeToMenu(node);
         } else {
             addOtherToMenu(node);
@@ -149,19 +83,6 @@ function randomColor(brightness: number) {
         randomChannel(brightness) +
         randomChannel(brightness)
     );
-}
-
-function throttle(func: Function, limit: number) {
-    let inThrottle = false;
-    return function () {
-        const args = arguments;
-        const context = this;
-        if (!inThrottle) {
-            func.apply(context, args);
-            inThrottle = true;
-            setTimeout(() => (inThrottle = false), limit);
-        }
-    };
 }
 
 function addMeToMenu(node: ModelNode) {
