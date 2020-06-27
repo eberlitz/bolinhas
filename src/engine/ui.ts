@@ -1,6 +1,5 @@
 import * as THREE from "three";
-import * as Matter from "matter-js";
-import { Bodies, Engine, World } from "matter-js";
+import { Bodies, Engine, World, Runner } from "matter-js";
 
 import "../lib/GPUParticleSystem";
 import { Model, Vec2 } from "../model";
@@ -14,9 +13,8 @@ import { GPUParticleSystem, ParticleOptions } from "../lib/GPUParticleSystem";
 // import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
 // create a Matter.js engine
-const engine = Engine.create({
-    render: { visible: false },
-} as Matter.IEngineDefinition);
+const engine = Engine.create();
+const runner = Runner.create({ isFixed: false });
 engine.world.gravity.y = 0;
 engine.world.gravity.x = 0;
 
@@ -140,6 +138,9 @@ export class Viewport {
     animate(time: number = 0) {
         requestAnimationFrame(this.animate.bind(this));
 
+        // Run the physics engine
+        Runner.tick(runner, engine, time);
+
         this.controls.forEach((control) => control.update(time));
 
         this.particleSystem.update(this.clock.getElapsedTime());
@@ -253,8 +254,6 @@ function initUI(target: HTMLElement) {
     // controls.maxZoom = 2;
 
     const vp = new Viewport(scene);
-    // run the engine
-    Engine.run(engine);
     vp.animate();
 
     return vp;
