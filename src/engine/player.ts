@@ -73,32 +73,26 @@ export class Player extends THREE.Group {
 
         // to use sine generator
         // var oscillator = this.audioListener.context.createOscillator();
-        // oscillator.type = 'sine';
-        // oscillator.frequency.setValueAtTime( 144, sound.context.currentTime );
-        // oscillator.start( 0 );
-        // sound.setNodeSource( oscillator as any );
+        // oscillator.type = "sine";
+        // oscillator.frequency.setValueAtTime(144, sound.context.currentTime);
+        // oscillator.start(0);
+        // sound.setNodeSource(oscillator as any);
         // TO use stream from other user
         var context = this.audioListener.context;
         var source = context.createMediaStreamSource(stream);
         sound.setNodeSource(source as any);
         // source.connect(context.destination);
 
-        // var oscGain = (this.oscGain = context.createGain());
-        // source.connect(oscGain);
-        // source.connect(context.destination);
-        // oscGain.connect(context.destination);
-        // oscGain.gain.value = 0;
 
         sound.rotateX(THREE.MathUtils.degToRad(90));
         this.add(sound);
         this.analyser = new THREE.AudioAnalyser(sound, 32);
-        // this.analyser.getAverageFrequency();
     }
 
     updatePosition(pos: Vec2) {
         this.position.x = pos[0];
         this.position.y = pos[1];
-        this._updateSoundVolume();
+        this.updateSoundVolume();
     }
 
     setColor(color: THREE.Color) {
@@ -123,7 +117,7 @@ export class Player extends THREE.Group {
         this.node.removeListener("stream", this._onMediaStream);
     }
 
-    private _updateSoundVolume() {
+    updateSoundVolume() {
         if (this.sound) {
             var distance = this.getWorldPosition(
                 new THREE.Vector3()
@@ -144,7 +138,10 @@ export class Player extends THREE.Group {
             //         .range([1, 0]);
             //     peer_audio.volume = scale(Math.max(Math.min(dist, 400), 0));
             // }
-            this.sound.getOutput().gain.value = Math.max(gain, 0);
+            gain = Math.max(gain, 0);
+            // this.audioEl.volume = gain;
+            // this.sound.setVolume(gain);
+            this.sound.getOutput().gain.value = gain;
             // this.sound.setVolume(Math.max(gain, 0));
         }
     }
