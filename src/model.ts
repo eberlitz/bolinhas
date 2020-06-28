@@ -8,7 +8,7 @@ export declare interface Model {
 export class Model extends EventEmitter {
     public nodes: ModelNode[] = [];
     public me: ModelNode;
-    disconnected: boolean;
+    disconnected: boolean = true;
 
     Add(n: ModelNode) {
         this.nodes.push(n);

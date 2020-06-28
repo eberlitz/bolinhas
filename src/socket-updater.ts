@@ -18,6 +18,7 @@ export function initSocket(
         transports: ["websocket"],
     });
     const me = model.me;
+    model.disconnected = true;
     me.on(
         "updated",
         throttle((n: ModelNode) => {
@@ -26,6 +27,7 @@ export function initSocket(
                 return;
             }
             // emit updates to the socket.io for any updates on my node.
+            // console.log(`sending update`, data)
             socket.emit("update", room, data);
         }, 33)
     );
