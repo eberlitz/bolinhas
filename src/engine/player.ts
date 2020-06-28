@@ -83,7 +83,6 @@ export class Player extends THREE.Group {
         sound.setNodeSource(source as any);
         // source.connect(context.destination);
 
-
         sound.rotateX(THREE.MathUtils.degToRad(90));
         this.add(sound);
         this.analyser = new THREE.AudioAnalyser(sound, 32);

@@ -44,13 +44,13 @@ export interface Updater {
 export class Viewport {
     start() {
         this.animate();
-        
+
         // This section allows the user to have its tab no visible, and
         // updates the audio gain accordingly to the other users positions.
         //
-        // I didn't understood why, but even by moving the updateSoundVolume 
-        // from the render loop to inside the socket.io updates the audio doesn't 
-        // seems to update if the tab is not visible, although if we call the update 
+        // I didn't understood why, but even by moving the updateSoundVolume
+        // from the render loop to inside the socket.io updates the audio doesn't
+        // seems to update if the tab is not visible, although if we call the update
         // from inside this setInterval it works.
         setInterval(() => {
             this.scene.children
