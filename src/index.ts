@@ -20,7 +20,6 @@ async function init() {
         return;
     }
 
-    removeLoadingSpinner();
     const room = getRoomName();
 
     const localAudioStream = await requestAudio();
@@ -147,12 +146,6 @@ function updatePlayerIndicator(id: string, name: string, color: string) {
     ) as HTMLSpanElement;
     playerNameEl.innerText = name;
     colorEl.style.backgroundColor = color;
-}
-
-function removeLoadingSpinner() {
-    const spinner = document.getElementById("overlay");
-    // const spinner = document.getElementById("spinner");
-    spinner?.parentElement?.removeChild(spinner);
 }
 
 function getRoomName() {

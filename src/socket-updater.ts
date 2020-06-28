@@ -38,6 +38,7 @@ export function initSocket(
         console.log("My peer ID is: " + peerId);
         me.setID(peerId);
         model.disconnected = false;
+        removeLoadingSpinner();
 
         console.log(`Joining room "${room} ..."`);
         socket.emit("join", room, me.toJSON());
@@ -99,4 +100,10 @@ export function throttle(func: Function, limit: number) {
             setTimeout(() => (inThrottle = false), limit);
         }
     };
+}
+
+function removeLoadingSpinner() {
+    const spinner = document.getElementById("overlay");
+    // const spinner = document.getElementById("spinner");
+    spinner?.parentElement?.removeChild(spinner);
 }
