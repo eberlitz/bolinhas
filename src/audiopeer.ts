@@ -143,6 +143,7 @@ export class AudioBroker {
 
     private attachOnStream(call: Peer.MediaConnection, msg: string) {
         call.on("close", () => {
+            console.log("call:close", call.peer);
             !call.open && this.currentAudioCalls.delete(call.peer);
         });
 
@@ -222,15 +223,12 @@ export class AudioBroker {
 
             call.on("close", () => {
                 otherNode.mediaStream = null;
-                console.log("call closed, removing audio el");
-                video &&
-                    video.parentElement &&
-                    video.parentElement.removeChild(video);
+                video?.parentElement?.removeChild(video);
             });
         });
 
-        call.on("error", function (err) {
-            console.log(err);
+        call.on("error", (err) => {
+            console.log("call:error", call.peer, err);
         });
     }
 }

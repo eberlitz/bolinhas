@@ -33,14 +33,6 @@ async function init() {
     createMainNode(model);
 
     const audioBroker = new AudioBroker(localAudioStream, model, iceServers);
-    // Only adding the option to make calls here, makes easy to create calls, only on updates.
-    // So newly added nodes, would only receive calls.
-    model.on("added", (n) => {
-        // Make audio call to anyone else other than me
-        if (n != model.me) {
-            audioBroker.makeAudioCall(n.Id());
-        }
-    });
 
     initSocket(model, audioBroker, room);
 }

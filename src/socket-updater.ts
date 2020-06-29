@@ -56,7 +56,7 @@ export function initSocket(
         }
     };
 
-    socket.on("init", (data: any) => {
+    socket.on("init", (data: { [id: string]: ModelNodeJSON }) => {
         console.log('received "init"');
 
         // If we reconnect we need to cleanup the nodes that are not in the server anymore, as they will get added later
@@ -64,13 +64,15 @@ export function initSocket(
             .filter((n) => n != model.me && !data[n.Id()])
             .forEach((n) => model.Delete(n));
 
-        for (const key in data) {
-            if (data.hasOwnProperty(key) && key !== model.me.Id()) {
-                const p = data[key] as ModelNodeJSON;
-                // console.log("[init]: updating player " + p.id);
+        Object.values(data)
+            .filter((a) => a.id !== model.me.Id())
+            .forEach((p) => {
                 updatePlayer(p);
-            }
-        }
+                // Only the ones that joins a room, will do calls to other.
+                // This way we avoid collisions where one peer tries to call
+                // another at exact same time.
+                audioBroker.makeAudioCall(p.id);
+            });
     });
 
     socket.on("update", (p: any) => {
