@@ -63,9 +63,7 @@ export class AudioBroker {
                     (location.protocol === "https:" ? 443 : 80),
                 path: "/peerjs",
                 config: {
-                    iceServers: [
-                        { url: "stun:stun1.l.google.com:19302" },
-                    ].concat(this.iceServers || []),
+                    iceServers: this.iceServers || [],
                 },
                 debug: 1,
             } as Peer.PeerConnectOption) as Peer;
