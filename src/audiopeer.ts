@@ -124,7 +124,7 @@ export class AudioBroker {
         });
     }
 
-    public async makeAudioCall(peer_id: string) {
+    public async makeAudioCall(peer_id: string, backoffTime = 100) {
         const peer = await this._ensurePeer();
         if (this.currentAudioCalls.has(peer_id)) {
             // ignore if there is already a call to that peer;
@@ -138,6 +138,26 @@ export class AudioBroker {
         const call = peer.call(peer_id, this.currentLocalStream);
         this.currentAudioCalls.set(peer_id, call);
         this.attachOnStream(call, "from_make_audio_call");
+
+        // This must be done only by the caller, otherwise calls will conflict from/to nodes
+        const reconnect = (err?: any) => {
+            // If the call was closed, but the node is still in our model, so the connection was probably a network failure,
+            if (!this.model.HasNode(call.peer)) {
+                return;
+            }
+            if (err) {
+                // If this came from the error event, make the backoff time at least 1sec.
+                backoffTime = Math.min(1000, backoffTime);
+            }
+            // Tries to reconnect
+            setTimeout(() => {
+                console.log(`reconnecting to ${peer_id}...`);
+                this.makeAudioCall(peer_id, backoffTime * 2);
+            }, Math.min(backoffTime, 10000)); // Max back off of 10s
+        };
+        call.on("close", reconnect);
+        call.on("error", reconnect);
+
         return call;
     }
 
