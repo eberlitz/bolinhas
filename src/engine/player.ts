@@ -10,6 +10,12 @@ const audioDistanceModel = {
     volume: 1,
 };
 
+const volumeScale = d3
+    .scalePow()
+    .exponent(0.36) // radius/maxDistance?
+    .domain([0, audioDistanceModel.maxDistance])
+    .range([1, 0]);
+
 export class Player extends THREE.Group {
     private material!: THREE.MeshBasicMaterial;
     public oldPos: Vec2 = [0, 0];
@@ -124,20 +130,16 @@ export class Player extends THREE.Group {
                 this.audioListener.getWorldPosition(new THREE.Vector3())
             );
             let gain = 0;
-            if (distance <= audioDistanceModel.maxDistance) {
-                gain =
-                    audioDistanceModel.volume *
-                    (1 - distance / audioDistanceModel.radius);
-            }
-
-            //     const scale = d3
-            //         .scalePow()
-            //         .exponent(0.36)
-            //         .domain([0, 400])
-            //         .range([1, 0]);
-            //     peer_audio.volume = scale(Math.max(Math.min(dist, 400), 0));
+            // if (distance <= audioDistanceModel.maxDistance) {
+            //     gain =
+            //         audioDistanceModel.volume *
+            //         (1 - distance / audioDistanceModel.radius);
             // }
-            gain = Math.max(gain, 0);
+            // gain = Math.max(gain, 0);
+
+
+            gain = volumeScale(Math.max(Math.min(distance, audioDistanceModel.maxDistance), 0));
+
             // this.audioEl.volume = gain;
             // this.sound.setVolume(gain);
             this.sound.getOutput().gain.value = gain;
