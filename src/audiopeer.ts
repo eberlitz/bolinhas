@@ -352,9 +352,7 @@ export class AudioBroker {
                     dispose();
                     console.log("Closing call with", call.peer);
                     call.close();
-                    video &&
-                        video.parentElement &&
-                        video.parentElement.removeChild(video);
+                    video?.parentElement?.removeChild(video);
                 }
             };
 
@@ -380,21 +378,27 @@ export class AudioBroker {
 function updateVideoStack(id: string, stream: MediaStream) {
     const viStack = document.getElementById("video-stack");
 
-    let video = document.getElementById("vi_" + id) as
-        | HTMLVideoElement
+    let videoDiv = document.getElementById("vi_" + id) as
+        | HTMLElement
         | undefined;
     if (stream.getVideoTracks().length == 0) {
-        video &&
-            video.parentElement &&
-            video.parentElement.removeChild(video);
+        videoDiv?.parentElement?.removeChild(videoDiv);
     } else {
+        if (!videoDiv) {
+            videoDiv = document.createElement("div") as HTMLElement;
+            videoDiv.classList.add("video-wrapper");
+            viStack.appendChild(videoDiv);
+        }
+        let video = videoDiv.getElementsByTagName("video")[0] as
+            | HTMLVideoElement
+            | undefined;
         if (!video) {
             video = document.createElement("video") as HTMLVideoElement;
             video.id = "vi_" + id;
             video.addEventListener("click", () =>
                 video.classList.toggle("small")
             );
-            viStack.appendChild(video);
+            videoDiv.appendChild(video);
         }
         video.autoplay = true;
         // Older browsers may not have srcObject
@@ -406,5 +410,5 @@ function updateVideoStack(id: string, stream: MediaStream) {
         }
         video.volume = 0;
     }
-    return video
+    return videoDiv
 }

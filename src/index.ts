@@ -59,8 +59,18 @@ async function init() {
     screenShareBtn.onclick = async () => {
         audioBroker.toggleScreenShare();;
         updateScreenShareBtn();
-
     };
+
+    const viStack = document.getElementById("video-stack");
+
+    const expandBtn = document.getElementById("expand-btn");
+    expandBtn.onclick = async () => {
+        viStack.classList.toggle("full");
+        expandBtn.innerText = expandBtn.textContent = (viStack.classList.contains("full")
+            ? "fullscreen_exit"
+            : "fullscreen");
+    };
+
 
 
     initSocket(model, audioBroker, room);
