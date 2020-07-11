@@ -4,6 +4,14 @@ import { Model, ModelNode } from "./model";
 
 export async function requestAudio() {
     const localAudioStream = await navigator.mediaDevices.getUserMedia({
+        video: false,
+        audio: true,
+    });
+    return localAudioStream;
+}
+
+async function requestAudioAndVideo() {
+    const localAudioStream = await navigator.mediaDevices.getUserMedia({
         video: true,
         audio: true,
     });
@@ -21,6 +29,7 @@ async function screenShare() {
 }
 
 export class AudioBroker {
+
     private currentAudioCalls: Map<string, Peer.MediaConnection> = new Map();
     private currentLocalStream: MediaStream;
     private _ongoingPeerPromise?: Promise<Peer>;
@@ -34,6 +43,7 @@ export class AudioBroker {
     };
     myselfMuted: boolean = false;
     isSharingScreen: boolean = false;
+    isCamEnable = false;
 
     constructor(
         public localStream: MediaStream,
@@ -41,13 +51,70 @@ export class AudioBroker {
         private iceServers: any[]
     ) {
         this.currentLocalStream = localStream;
-        (window as any).toggleMic = this.toggleMic.bind(this);
+
+        this.isCamEnable = localStream.getVideoTracks().length > 0;
+        this.myselfMuted = localStream.getAudioTracks().length == 0;
     }
 
     init() {
         this._ongoingPeerPromise = null;
         this.closeAll();
         return this._ensurePeer();
+    }
+
+    async toggleCamera() {
+        this.isCamEnable = !this.isCamEnable;
+        this.localStream.getVideoTracks().forEach(a => (a.enabled = this.isCamEnable))
+
+        if (this.isCamEnable) {
+
+
+
+            // If current local stream doesn't have video,
+            // Then request it
+            let videoTrack = this.localStream.getVideoTracks()[0];
+            if (!videoTrack) {
+                this.localStream = await requestAudioAndVideo();
+                videoTrack = this.localStream.getVideoTracks()[0];
+            }
+            // check whether calls already have a video track
+            const needsRenegotiation = this.currentLocalStream.getVideoTracks().length == 0;
+
+            if (this.isSharingScreen) {
+                const ss_stream_track = this.currentLocalStream.getVideoTracks()[0];
+                ss_stream_track?.stop()
+            }
+
+            this.currentLocalStream = this.localStream;
+
+            if (needsRenegotiation) {
+                this._forceRenegotiation();
+            } else {
+                this.currentAudioCalls.forEach((call) => {
+                    if (!call) return;
+                    const sender = call.peerConnection.getSenders().find(a => a.track.kind == videoTrack.kind);
+                    sender.replaceTrack(videoTrack);
+                });
+            }
+        }
+
+    }
+
+    private _forceRenegotiation() {
+        this.currentAudioCalls.forEach(call => {
+            if (!call) return;
+            // // Add video
+            // call.peerConnection.addTrack(videoTrack, this.localStream);
+            // // Replace audio
+            // const audioSender = call.peerConnection.getSenders().find(a => a.track.kind == audioTrack.kind);
+            // audioSender.replaceTrack(audioTrack);
+
+            // Close all calls without reconections
+            (call as any).explicityClose = true;
+            call.close();
+            // Redo the call
+            this.makeAudioCall(call.peer)
+        });
     }
 
     public async toggleScreenShare() {
@@ -58,24 +125,41 @@ export class AudioBroker {
             const videoTrack = ss_stream.getVideoTracks()[0];
             // Add listen for if the current track swaps, swap back
             videoTrack.onended = () => this.toggleScreenShare();
+
+
+            // check whether calls already have a video track
+            const needsRenegotiation = this.currentLocalStream.getVideoTracks().length == 0;
+
             // Update the current local stream for any new calls
             this.currentLocalStream = new MediaStream([videoTrack, this.localStream.getAudioTracks()[0]]);
 
-            this.currentAudioCalls.forEach((call) => {
-                if (!call) return;
-                const sender = call.peerConnection.getSenders().find(a => a.track.kind == videoTrack.kind);
-                sender.replaceTrack(videoTrack);
-            });
+            if (needsRenegotiation) {
+                this._forceRenegotiation();
+            } else {
+                this.currentAudioCalls.forEach((call) => {
+                    if (!call) return;
+                    const sender = call.peerConnection.getSenders().find(a => a.track.kind == videoTrack.kind);
+                    sender.replaceTrack(videoTrack);
+                });
+            }
         } else {
+            // Stops the screen sharing
+            const ss_stream_track = this.currentLocalStream.getVideoTracks()[0];
+            ss_stream_track?.stop()
             // To switch back to normal camera and audio
             // Revert to the old stream
             this.currentLocalStream = this.localStream;
             const originalVideoTrack = this.localStream.getVideoTracks()[0];
-            this.currentAudioCalls.forEach((call) => {
-                if (!call) return;
-                const sender = call.peerConnection.getSenders().find(a => a.track.kind == originalVideoTrack.kind);
-                sender.replaceTrack(originalVideoTrack);
-            });
+
+            if (!originalVideoTrack) {
+                this._forceRenegotiation();
+            } else {
+                this.currentAudioCalls.forEach((call) => {
+                    if (!call) return;
+                    const sender = call.peerConnection.getSenders().find(a => a.track.kind == originalVideoTrack.kind);
+                    sender.replaceTrack(originalVideoTrack);
+                });
+            }
         }
     }
 
@@ -94,7 +178,10 @@ export class AudioBroker {
     private closeAll() {
         this.currentAudioCalls.forEach((call, pID) => {
             this.currentAudioCalls.delete(pID);
-            call?.close();
+            if (call) {
+                (call as any).explicityClose = true;
+                call.close();
+            }
         });
     }
 
@@ -150,20 +237,20 @@ export class AudioBroker {
                 this.attachOnStream(call, "from_receiving_call");
             });
 
-            (window as any).startScreenShare = async () => {
-                const stream: MediaStream = await screenShare();
-                stream.addTrack(this.localStream.getAudioTracks()[0]);
-                this.currentLocalStream = stream;
+            // (window as any).startScreenShare = async () => {
+            //     const stream: MediaStream = await screenShare();
+            //     stream.addTrack(this.localStream.getAudioTracks()[0]);
+            //     this.currentLocalStream = stream;
 
-                this.currentAudioCalls.forEach((call) => {
-                    if (!call) return;
-                    const pID = call.peer;
-                    call.close();
-                    const newCall = peer.call(pID, stream);
-                    this.currentAudioCalls.set(pID, newCall);
-                    this.attachOnStream(newCall, "from_make_screenshare_call");
-                });
-            };
+            //     this.currentAudioCalls.forEach((call) => {
+            //         if (!call) return;
+            //         const pID = call.peer;
+            //         call.close();
+            //         const newCall = peer.call(pID, stream);
+            //         this.currentAudioCalls.set(pID, newCall);
+            //         this.attachOnStream(newCall, "from_make_screenshare_call");
+            //     });
+            // };
             return peer;
         });
     }
@@ -175,6 +262,11 @@ export class AudioBroker {
             console.warn("There is already a audio call to peer " + peer_id);
             return;
         }
+        if (!this.model.HasNode(peer_id)) {
+            console.warn(`Can't call ${peer_id}, because he is not in the model anymore!`);
+            return;
+        }
+
         this.currentAudioCalls.set(peer_id, null);
 
         console.log(`calling ${peer_id}...`);
@@ -185,6 +277,9 @@ export class AudioBroker {
 
         // This must be done only by the caller, otherwise calls will conflict from/to nodes
         const reconnect = (err?: any) => {
+            if ((call as any).explicityClose) {
+                return;
+            }
             // If the call was closed, but the node is still in our model, so the connection was probably a network failure,
             if (!this.model.HasNode(call.peer)) {
                 return;

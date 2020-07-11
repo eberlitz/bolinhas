@@ -23,6 +23,8 @@ async function init() {
     const room = getRoomName();
 
     const localAudioStream = await requestAudio();
+    new MediaStream()
+
     const iceServers = await fetch("/ice").then((response) => response.json());
 
     var model = new Model();
@@ -35,24 +37,29 @@ async function init() {
     const audioBroker = new AudioBroker(localAudioStream, model, iceServers);
 
     const micBtn = document.getElementById("mic-btn");
+    const updateMicBtn = () => micBtn.innerText = micBtn.textContent = audioBroker.myselfMuted ? "mic_off" : "mic";
+    updateMicBtn();
     micBtn.onclick = () => {
-        audioBroker.toggleMic()
-        micBtn.innerText = micBtn.textContent = audioBroker.myselfMuted ? "mic_off" : "mic";
+        audioBroker.toggleMic();
+        updateMicBtn();
     };
     const camBtn = document.getElementById("cam-btn");
-    let camEnable = true;
+    const updateCamBtn = () => camBtn.innerText = camBtn.textContent = audioBroker.isCamEnable ? "videocam" : "videocam_off";
+    updateCamBtn();
     camBtn.onclick = () => {
-        camEnable = !camEnable;
-        localAudioStream.getVideoTracks().forEach(a => (a.enabled = camEnable))
-        camBtn.innerText = camBtn.textContent = camEnable ? "videocam" : "videocam_off";
+        audioBroker.toggleCamera();
+        updateCamBtn();
     };
 
     const screenShareBtn = document.getElementById("screen-share-btn");
+    const updateScreenShareBtn = () => screenShareBtn.innerText = screenShareBtn.textContent = audioBroker.isSharingScreen
+        ? "stop_screen_share"
+        : "screen_share";
+    updateScreenShareBtn();
     screenShareBtn.onclick = async () => {
-        audioBroker.toggleScreenShare();
-        screenShareBtn.innerText = screenShareBtn.textContent = audioBroker.isSharingScreen
-            ? "stop_screen_share"
-            : "screen_share";
+        audioBroker.toggleScreenShare();;
+        updateScreenShareBtn();
+
     };
 
 
@@ -103,6 +110,7 @@ function addMeToMenu(node: ModelNode) {
     const playerContainer = document.createElement("div");
     playerContainer.id = "pi-" + node.Id();
     playerContainer.classList.add("main-player-item");
+    playerContainer.classList.add("player");
     const playerColor = document.createElement("span");
     playerColor.classList.add("color-indicator");
     const playerName = document.createElement("input");
@@ -128,6 +136,7 @@ function addOtherToMenu(node: ModelNode) {
     const htmlPlayersContainer = document.getElementById("players");
     const playerContainer = document.createElement("div");
     playerContainer.id = "pi-" + node.Id();
+    playerContainer.classList.add("player")
     const playerColor = document.createElement("span");
     playerColor.classList.add("color-indicator");
     const playerName = document.createElement("span");

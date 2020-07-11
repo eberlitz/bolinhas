@@ -24,14 +24,22 @@ body {
 
 .menu {
   position: relative;
-  width: 200px;
+  max-width: 200px;
   float: right;
   margin: 5px;
-  background-color: #ddd;
+  background-color: #333;
   padding: 5px;
+  color: white;
 
   span {
     user-select: none;
+  }
+
+  .player {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin: 5px 2px;
   }
 }
 
@@ -39,9 +47,14 @@ body {
   input {
     display: inline-block;
     width: 100px;
-    margin-left: 5px;
+    border: none;
+    padding: 2px;
+    margin: 0;
+    flex:1;
   }
 }
+
+
 
 .color-indicator {
   height: 15px;
@@ -51,6 +64,8 @@ body {
   border-color: #000;
   border-width: 2px;
   display: inline-block;
+  margin-right: 5px;
+  border: 1px solid white;
 }
 
 #video-stack {
@@ -82,7 +97,7 @@ div#overlay {
   justify-content: center;
   align-items: center;
   color: wheat;
-  // border-radius: 2%;
+  z-index: 99;
 }
 
 .sk-chase {
@@ -203,15 +218,31 @@ div#overlay {
   justify-content: center;
 }
 .controls-wrapper {
-  background-color: #333;
   display: flex;
   flex-direction: row;
   cursor: pointer;
 
-  border-radius: 10%;
   padding-bottom: 4px;
 
-  & > * {
+  i {
     padding: 10px;
+    z-index:1;
+    background-color: #333;
+    border-radius: 10%;
+
+    &:hover{
+      background-color: #444;
+    }
   }
+}
+
+.controls-wrapper::before {
+  content: " ";
+  background-color: #333;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 0;
 }
