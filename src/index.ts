@@ -52,18 +52,14 @@ async function init() {
     };
 
     const screenShareBtn = document.getElementById("screen-share-btn");
-    if (!(navigator.mediaDevices as any).getDisplayMedia) {
-        screenShareBtn?.parentElement?.removeChild(screenShareBtn);
-    } else {
-        const updateScreenShareBtn = () => screenShareBtn.innerText = screenShareBtn.textContent = audioBroker.isSharingScreen
-            ? "stop_screen_share"
-            : "screen_share";
+    const updateScreenShareBtn = () => screenShareBtn.innerText = screenShareBtn.textContent = audioBroker.isSharingScreen
+        ? "stop_screen_share"
+        : "screen_share";
+    updateScreenShareBtn();
+    screenShareBtn.onclick = async () => {
+        audioBroker.toggleScreenShare();;
         updateScreenShareBtn();
-        screenShareBtn.onclick = async () => {
-            audioBroker.toggleScreenShare();;
-            updateScreenShareBtn();
-        };
-    }
+    };
 
 
     const viStack = document.getElementById("video-stack");
