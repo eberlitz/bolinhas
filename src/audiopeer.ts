@@ -118,8 +118,7 @@ export class AudioBroker {
             // audioSender.replaceTrack(audioTrack);
 
             // Close all calls without reconections
-            (call as any).explicityClose = true;
-            call.close();
+            closeWithoutReconnects(call);
             // Redo the call
             this.makeAudioCall(call.peer)
         });
@@ -139,7 +138,10 @@ export class AudioBroker {
             const needsRenegotiation = this.currentLocalStream.getVideoTracks().length == 0;
 
             // Update the current local stream for any new calls
-            this.currentLocalStream = new MediaStream([videoTrack, this.localStream.getAudioTracks()[0]]);
+            ss_stream.addTrack(this.localStream.getAudioTracks()[0]);
+            this.currentLocalStream = ss_stream;
+            // OR
+            // this.currentLocalStream = new MediaStream([videoTrack, this.localStream.getAudioTracks()[0]]);
 
             if (needsRenegotiation) {
                 this._forceRenegotiation();
@@ -187,10 +189,7 @@ export class AudioBroker {
     private closeAll() {
         this.currentAudioCalls.forEach((call, pID) => {
             this.currentAudioCalls.delete(pID);
-            if (call) {
-                (call as any).explicityClose = true;
-                call.close();
-            }
+            closeWithoutReconnects(call);
         });
     }
 
@@ -229,7 +228,7 @@ export class AudioBroker {
             peer.on("call", async (call) => {
                 const oldcall = this.currentAudioCalls.get(call.peer);
                 if (!!oldcall) {
-                    oldcall.close();
+                    closeWithoutReconnects(oldcall)
                     // // ignore if there is already a call to that peer;
                     // console.warn(
                     //     "There is already a audio call to peer " + call.peer
@@ -374,6 +373,13 @@ export class AudioBroker {
     }
 }
 
+
+function closeWithoutReconnects(call: Peer.MediaConnection) {
+    if (call) {
+        (call as any).explicityClose = true;
+        call.close();
+    }
+}
 
 function updateVideoStack(id: string, stream: MediaStream) {
     const viStack = document.getElementById("video-stack");
