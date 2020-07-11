@@ -2,6 +2,7 @@ import "webrtc-adapter";
 import * as Peer from "peerjs";
 import { Model, ModelNode } from "./model";
 
+const MAIN_PLAYER_VIDEO_ID = "main_player";
 export async function requestAudio() {
     const localAudioStream = await navigator.mediaDevices.getUserMedia({
         video: false,
@@ -104,7 +105,7 @@ export class AudioBroker {
             this._forceRenegotiation()
 
         }
-
+        updateVideoStack(MAIN_PLAYER_VIDEO_ID, this.localStream);
     }
 
     private _forceRenegotiation() {
@@ -168,6 +169,7 @@ export class AudioBroker {
                 });
             }
         }
+        updateVideoStack(MAIN_PLAYER_VIDEO_ID, this.localStream);
     }
 
     public toggleMic() {
