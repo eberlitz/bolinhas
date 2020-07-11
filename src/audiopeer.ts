@@ -3,6 +3,18 @@ import * as Peer from "peerjs";
 import { Model, ModelNode } from "./model";
 
 const MAIN_PLAYER_VIDEO_ID = "main_player";
+
+// Fix peerjs issue https://github.com/peers/peerjs/issues/147
+var options = {
+    'constraints': {
+        'mandatory': {
+            'OfferToReceiveAudio': true,
+            'OfferToReceiveVideo': true
+        },
+        offerToReceiveAudio: 1,
+        offerToReceiveVideo: 1,
+    }
+};
 export async function requestAudio() {
     const localAudioStream = await navigator.mediaDevices.getUserMedia({
         video: false,
@@ -279,7 +291,7 @@ export class AudioBroker {
 
         console.log(`calling ${peer_id}...`);
 
-        const call = peer.call(peer_id, this.currentLocalStream);
+        const call = peer.call(peer_id, this.currentLocalStream, options as any);
         this.currentAudioCalls.set(peer_id, call);
         this.attachOnStream(call, "from_make_audio_call");
 
