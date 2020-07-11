@@ -32,6 +32,7 @@ export class AudioBroker {
         const peer = await this._ongoingPeerPromise;
         return peer;
     };
+    myselfMuted: boolean = false;
 
     constructor(
         public localStream: MediaStream,
@@ -39,12 +40,25 @@ export class AudioBroker {
         private iceServers: any[]
     ) {
         this.currentLocalStream = localStream;
+        (window as any).toggleMic = this.toggleMic.bind(this);
     }
 
     init() {
         this._ongoingPeerPromise = null;
         this.closeAll();
         return this._ensurePeer();
+    }
+
+    public toggleMic() {
+        this.myselfMuted = !this.myselfMuted;
+        this.currentLocalStream.getAudioTracks().forEach(a => (a.enabled = !this.myselfMuted))
+
+        // Alternative is to not disable the localStream, but only the local end of the streaming peer calls. Althou if a user disconnect and reconnect, this also needs to be done.
+        //     this.currentAudioCalls.forEach((call) =>
+        //         call.peerConnection
+        //             .getSenders()
+        //             .filter((a) => a.track.kind == "audio")
+        //             .forEach((c) => (c.track.enabled = !this.myselfMuted)));
     }
 
     private closeAll() {

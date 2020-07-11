@@ -34,6 +34,14 @@ async function init() {
 
     const audioBroker = new AudioBroker(localAudioStream, model, iceServers);
 
+    const micBtn = document.getElementById("mic-btn");
+    micBtn.onclick = () => {
+        audioBroker.toggleMic()
+        micBtn.innerText = micBtn.textContent = audioBroker.myselfMuted ? "mic_off" : "mic";
+    };
+    // const camBtn = document.getElementById("cam-btn");
+
+
     initSocket(model, audioBroker, room);
 }
 

@@ -1,34 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, user-scalable=no"
-    />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title><%= htmlWebpackPlugin.options.title %></title>
-  </head>
 
-  <body>
-    <div class="wrapper">
-      <div id="viewport" tabindex="0"></div>
-      <div class="menu">
-        <span>Me:</span>
-        <div id="me"></div>
-        <span>Players:</span>
-        <div id="players"></div>
-      </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title><%= htmlWebpackPlugin.options.title %></title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+
+<body>
+  <div class="wrapper">
+    <div id="viewport" tabindex="0"></div>
+    <div class="menu">
+      <span>Me:</span>
+      <div id="me"></div>
+      <span>Players:</span>
+      <div id="players"></div>
     </div>
-    <div id="overlay">
-      <div id="spinner" class="sk-chase">
-        <div class="sk-chase-dot"></div>
-        <div class="sk-chase-dot"></div>
-        <div class="sk-chase-dot"></div>
-        <div class="sk-chase-dot"></div>
-        <div class="sk-chase-dot"></div>
-        <div class="sk-chase-dot"></div>
-      </div>
+  </div>
+  <div class="controls">
+    <div class="controls-wrapper">
+      <i id="mic-btn" class="material-icons md-light md-24">mic</i>
+      <!-- <i id="cam-btn" class="material-icons md-light md-24">videocam</i> -->
     </div>
-  </body>
+  </div>
+  <div id="overlay">
+    <div id="spinner" class="sk-chase">
+      <div class="sk-chase-dot"></div>
+      <div class="sk-chase-dot"></div>
+      <div class="sk-chase-dot"></div>
+      <div class="sk-chase-dot"></div>
+      <div class="sk-chase-dot"></div>
+      <div class="sk-chase-dot"></div>
+    </div>
+  </div>
+</body>
+
 </html>
