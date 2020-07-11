@@ -39,7 +39,13 @@ async function init() {
         audioBroker.toggleMic()
         micBtn.innerText = micBtn.textContent = audioBroker.myselfMuted ? "mic_off" : "mic";
     };
-    // const camBtn = document.getElementById("cam-btn");
+    const camBtn = document.getElementById("cam-btn");
+    let camEnable = true;
+    camBtn.onclick = () => {
+        camEnable = !camEnable;
+        localAudioStream.getVideoTracks().forEach(a => (a.enabled = camEnable))
+        camBtn.innerText = camBtn.textContent = camEnable ? "videocam" : "videocam_off";
+    };
 
 
     initSocket(model, audioBroker, room);

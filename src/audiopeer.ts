@@ -4,7 +4,7 @@ import { Model, ModelNode } from "./model";
 
 export async function requestAudio() {
     const localAudioStream = await navigator.mediaDevices.getUserMedia({
-        video: false,
+        video: true,
         audio: true,
     });
     return localAudioStream;
@@ -208,6 +208,8 @@ export class AudioBroker {
 
             otherNode.mediaStream = stream;
 
+            const viStack = document.getElementById("video-stack");
+
             let video = document.getElementById("vi_" + call.peer) as
                 | HTMLVideoElement
                 | undefined;
@@ -222,7 +224,7 @@ export class AudioBroker {
                     video.addEventListener("click", () =>
                         video.classList.toggle("small")
                     );
-                    document.body.appendChild(video);
+                    viStack.appendChild(video);
                 }
                 video.autoplay = true;
                 // Older browsers may not have srcObject
