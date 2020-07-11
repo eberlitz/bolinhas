@@ -17,7 +17,7 @@ async function screenShare() {
         },
         audio: false,
     });
-    return stream;
+    return stream as MediaStream;
 }
 
 export class AudioBroker {
@@ -33,6 +33,7 @@ export class AudioBroker {
         return peer;
     };
     myselfMuted: boolean = false;
+    isSharingScreen: boolean = false;
 
     constructor(
         public localStream: MediaStream,
@@ -47,6 +48,35 @@ export class AudioBroker {
         this._ongoingPeerPromise = null;
         this.closeAll();
         return this._ensurePeer();
+    }
+
+    public async toggleScreenShare() {
+        this.isSharingScreen = !this.isSharingScreen;
+
+        if (this.isSharingScreen) {
+            const ss_stream = await screenShare()
+            const videoTrack = ss_stream.getVideoTracks()[0];
+            // Add listen for if the current track swaps, swap back
+            videoTrack.onended = () => this.toggleScreenShare();
+            // Update the current local stream for any new calls
+            this.currentLocalStream = new MediaStream([videoTrack, this.localStream.getAudioTracks()[0]]);
+
+            this.currentAudioCalls.forEach((call) => {
+                if (!call) return;
+                const sender = call.peerConnection.getSenders().find(a => a.track.kind == videoTrack.kind);
+                sender.replaceTrack(videoTrack);
+            });
+        } else {
+            // To switch back to normal camera and audio
+            // Revert to the old stream
+            this.currentLocalStream = this.localStream;
+            const originalVideoTrack = this.localStream.getVideoTracks()[0];
+            this.currentAudioCalls.forEach((call) => {
+                if (!call) return;
+                const sender = call.peerConnection.getSenders().find(a => a.track.kind == originalVideoTrack.kind);
+                sender.replaceTrack(originalVideoTrack);
+            });
+        }
     }
 
     public toggleMic() {

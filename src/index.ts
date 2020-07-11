@@ -47,6 +47,14 @@ async function init() {
         camBtn.innerText = camBtn.textContent = camEnable ? "videocam" : "videocam_off";
     };
 
+    const screenShareBtn = document.getElementById("screen-share-btn");
+    screenShareBtn.onclick = async () => {
+        audioBroker.toggleScreenShare();
+        screenShareBtn.innerText = screenShareBtn.textContent = audioBroker.isSharingScreen
+            ? "stop_screen_share"
+            : "screen_share";
+    };
+
 
     initSocket(model, audioBroker, room);
 }
