@@ -83,6 +83,7 @@ export class AudioBroker {
             if (this.isSharingScreen) {
                 const ss_stream_track = this.currentLocalStream.getVideoTracks()[0];
                 ss_stream_track?.stop()
+                this.isSharingScreen = false;
             }
 
             this.currentLocalStream = this.localStream;
@@ -96,6 +97,14 @@ export class AudioBroker {
                     sender.replaceTrack(videoTrack);
                 });
             }
+        } else {
+            // To fully stop collecting camera
+            const newStream = await requestAudio();
+            this.localStream.getTracks().forEach(t => t.stop());
+            // this.currentLocalStream.getTracks().forEach(t => t.stop());
+            this.currentLocalStream = this.localStream = newStream;
+            this._forceRenegotiation()
+
         }
 
     }
