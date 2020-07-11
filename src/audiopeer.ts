@@ -68,8 +68,6 @@ export class AudioBroker {
 
         if (this.isCamEnable) {
 
-
-
             // If current local stream doesn't have video,
             // Then request it
             let videoTrack = this.localStream.getVideoTracks()[0];
@@ -342,34 +340,7 @@ export class AudioBroker {
 
             otherNode.mediaStream = stream;
 
-            const viStack = document.getElementById("video-stack");
-
-            let video = document.getElementById("vi_" + call.peer) as
-                | HTMLVideoElement
-                | undefined;
-            if (stream.getVideoTracks().length == 0) {
-                video &&
-                    video.parentElement &&
-                    video.parentElement.removeChild(video);
-            } else {
-                if (!video) {
-                    video = document.createElement("video") as HTMLVideoElement;
-                    video.id = "vi_" + call.peer;
-                    video.addEventListener("click", () =>
-                        video.classList.toggle("small")
-                    );
-                    viStack.appendChild(video);
-                }
-                video.autoplay = true;
-                // Older browsers may not have srcObject
-                if (("srcObject" in video) as any) {
-                    video.srcObject = stream;
-                } else {
-                    // Avoid using this in new browsers, as it is going away.
-                    video.src = window.URL.createObjectURL(stream);
-                }
-                video.volume = 0;
-            }
+            const video = updateVideoStack(call.peer, stream);
 
             const listeners: Array<() => void> = [];
             const dispose = () => listeners.splice(0).forEach((d) => d());
@@ -401,4 +372,37 @@ export class AudioBroker {
             console.log("call:error", call.peer, err);
         });
     }
+}
+
+
+function updateVideoStack(id: string, stream: MediaStream) {
+    const viStack = document.getElementById("video-stack");
+
+    let video = document.getElementById("vi_" + id) as
+        | HTMLVideoElement
+        | undefined;
+    if (stream.getVideoTracks().length == 0) {
+        video &&
+            video.parentElement &&
+            video.parentElement.removeChild(video);
+    } else {
+        if (!video) {
+            video = document.createElement("video") as HTMLVideoElement;
+            video.id = "vi_" + id;
+            video.addEventListener("click", () =>
+                video.classList.toggle("small")
+            );
+            viStack.appendChild(video);
+        }
+        video.autoplay = true;
+        // Older browsers may not have srcObject
+        if (("srcObject" in video) as any) {
+            video.srcObject = stream;
+        } else {
+            // Avoid using this in new browsers, as it is going away.
+            video.src = window.URL.createObjectURL(stream);
+        }
+        video.volume = 0;
+    }
+    return video
 }
