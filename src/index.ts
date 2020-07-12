@@ -23,7 +23,6 @@ async function init() {
     const room = getRoomName();
 
     const localAudioStream = await requestAudio();
-    new MediaStream()
 
     const iceServers = await fetch("/ice").then((response) => response.json());
 
@@ -36,6 +35,14 @@ async function init() {
 
     const audioBroker = new AudioBroker(localAudioStream, model, iceServers);
 
+    initControls(audioBroker);
+
+
+
+    initSocket(model, audioBroker, room);
+}
+
+function initControls(audioBroker: AudioBroker) {
     const micBtn = document.getElementById("mic-btn");
     const updateMicBtn = () => micBtn.innerText = micBtn.textContent = audioBroker.myselfMuted ? "mic_off" : "mic";
     updateMicBtn();
@@ -71,10 +78,6 @@ async function init() {
             ? "fullscreen_exit"
             : "fullscreen");
     };
-
-
-
-    initSocket(model, audioBroker, room);
 }
 
 function createMainNode(model: Model) {
