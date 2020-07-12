@@ -81,21 +81,42 @@ body {
   flex-direction: row;
   flex-wrap: wrap;
   justify-content: flex-end;
-  max-height: 15em;
+  height: 10em;
+  overflow: hidden;
+  border-top: 3px dashed;
+
   video {
     max-width: 100%;
     max-height: 100%;
+    box-sizing: border-box;
+    object-fit: cover;
   }
-  .video-wrapper{
+  .video-wrapper,video{
     display: flex;
     justify-content: center;
     flex: none;
+    width: 18em;
+    height: 10em;
   }
   &.full {
     top:0;
-    max-height: 100%;
-    .video-wrapper{
+    height: 100%;
+    border:none;
+    .video-wrapper, video{
       flex:1;
+      width: auto;
+      height: auto;
+    }
+
+    video.pinned {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      right: 0;
+      left: 0;
+      width: 100%;
+      right: 100%;
+      border: 2px dashed black;
     }
   }
 }

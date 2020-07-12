@@ -408,21 +408,28 @@ function updateVideoStack(id: string, stream: MediaStream) {
     if (stream.getVideoTracks().length == 0) {
         videoDiv?.parentElement?.removeChild(videoDiv);
     } else {
+        // if (!videoDiv) {
+        //     videoDiv = document.createElement("div") as HTMLElement;
+        //     videoDiv.id = "vi_" + id;
+        //     videoDiv.classList.add("video-wrapper");
+        //     viStack.appendChild(videoDiv);
+        // }
+        // let video = videoDiv.getElementsByTagName("video")[0] as
+        //     | HTMLVideoElement
+        //     | undefined;
+        // if (!video) {
+        let video = videoDiv as HTMLVideoElement;
         if (!videoDiv) {
-            videoDiv = document.createElement("div") as HTMLElement;
-            videoDiv.classList.add("video-wrapper");
-            viStack.appendChild(videoDiv);
-        }
-        let video = videoDiv.getElementsByTagName("video")[0] as
-            | HTMLVideoElement
-            | undefined;
-        if (!video) {
             video = document.createElement("video") as HTMLVideoElement;
             video.id = "vi_" + id;
-            video.addEventListener("click", () =>
-                video.classList.toggle("small")
-            );
-            videoDiv.appendChild(video);
+            video.addEventListener("click", () => {
+                if (viStack.classList.contains("full")) {
+                    video.classList.toggle("pinned")
+                }
+            });
+            // videoDiv.appendChild(video);
+            videoDiv = video;
+            viStack.appendChild(videoDiv);
         }
         video.autoplay = true;
         // Older browsers may not have srcObject
