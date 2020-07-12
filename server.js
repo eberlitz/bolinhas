@@ -20,6 +20,7 @@ let sendFile = (url, res, next) =>
 // Value is the data for that room
 // To scale this needs to be in a redis
 const serverState = {};
+const callIsAllowed = buildCallChecker();
 
 io.on("connection", (socket) => {
   console.log("a user connected");
@@ -42,27 +43,12 @@ io.on("connection", (socket) => {
     });
   });
 
-  const callIntents = {};
-  let counterCALLID = 1;
-  socket.on("call_intention", (room, from, to) => {
-    const r = callIntents[room] = callIntents[room] || {};
-    const callings = r.callings = r.callings || {};
 
-    let query = `${to}/${from}`; // is `to` calling `from` ?
-    if (callings[query]) {
-      // Not allowed, 
-      delete callings[query];
-      return
-    } else {
-      query = `${from}/${to}`;
-      const id = counterCALLID++;
-      callings[query] = id;
-      // Delete the query if it was of the same request(id), after some time, to allow reconections in case of errors
-      setTimeout(() => {
-        if (callings[query] === id) {
-          delete callings[query];
-        }
-      }, 10000);
+
+
+
+  socket.on("call_intention", (room, from, to) => {
+    if (callIsAllowed(room, from, to)) {
       socket.emit("call_allowed", to);
     }
   });
@@ -216,3 +202,37 @@ httpServer.on("upgrade", (req, socket, head) => {
     socket.destroy();
   }
 });
+
+function buildCallChecker() {
+  const callIntents = {};
+  let counterCALLID = 1;
+
+  return (room, from, to) => {
+
+    if (!callIntents[room]) {
+      callIntents[room] = new Map();
+    }
+
+    const callings = callIntents[room];
+
+    let query = `${to}/${from}`; // is `to` calling `from` ?
+
+
+    if (callings.has(query)) {
+      // Not allowed, 
+      callings.delete(query);
+      return false
+    }
+
+    query = `${from}/${to}`;
+    const id = counterCALLID++;
+    callings.set(query, id);
+    // Delete the query if it was of the same request(id), after some time, to allow reconections in case of errors
+    setTimeout(() => {
+      if (callings.get(query) === id) {
+        callings.delete(query);
+      }
+    }, 10000);
+    return true
+  }
+}
