@@ -205,6 +205,12 @@ export class AudioBroker {
         });
     }
 
+    public closeCallWith(pid: string) {
+        const call = this.currentAudioCalls.get(pid)
+        this.currentAudioCalls.delete(pid);
+        closeWithoutReconnects(call);
+    }
+
     private _connectToPeerJS() {
         const p = new Promise((resolve, reject) => {
             const peer = new (Peer as any).default({

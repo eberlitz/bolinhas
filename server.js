@@ -42,6 +42,31 @@ io.on("connection", (socket) => {
     });
   });
 
+  const callIntents = {};
+  let counterCALLID = 1;
+  socket.on("call_intention", (room, from, to) => {
+    const r = callIntents[room] = callIntents[room] || {};
+    const callings = r.callings = r.callings || {};
+
+    let query = `${to}/${from}`; // is `to` calling `from` ?
+    if (callings[query]) {
+      // Not allowed, 
+      delete callings[query];
+      return
+    } else {
+      query = `${from}/${to}`;
+      const id = counterCALLID++;
+      callings[query] = id;
+      // Delete the query if it was of the same request(id), after some time, to allow reconections in case of errors
+      setTimeout(() => {
+        if (callings[query] === id) {
+          delete callings[query];
+        }
+      }, 10000);
+      socket.emit("call_allowed", to);
+    }
+  });
+
   socket.on("update", (room, player) => {
     !player.id && console.log("EMPTY", player);
     const roomState = (serverState[room] = serverState[room] || {});

@@ -124,11 +124,10 @@ export class Player extends THREE.Group {
 
     updateSoundVolume() {
         if (this.sound) {
-            var distance = this.getWorldPosition(
-                new THREE.Vector3()
-            ).distanceTo(
-                this.audioListener.getWorldPosition(new THREE.Vector3())
-            );
+            var distance = this.getWorldPosition(new THREE.Vector3())
+                .distanceTo(
+                    this.audioListener.getWorldPosition(new THREE.Vector3())
+                );
             let gain = 0;
             // if (distance <= audioDistanceModel.maxDistance) {
             //     gain =

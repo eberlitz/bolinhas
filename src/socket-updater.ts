@@ -1,7 +1,8 @@
 import * as io from "socket.io-client";
 
-import { Model, ModelNode, ModelNodeJSON } from "./model";
+import { Model, ModelNode, ModelNodeJSON, Vec2 } from "./model";
 import { AudioBroker } from "./audiopeer";
+import * as THREE from "three";
 
 export function initSocket(
     model: Model,
@@ -71,7 +72,7 @@ export function initSocket(
                 // Only the ones that joins a room, will do calls to other.
                 // This way we avoid collisions where one peer tries to call
                 // another at exact same time.
-                audioBroker.makeAudioCall(p.id);
+                // audioBroker.makeAudioCall(p.id);
             });
     });
 
@@ -89,6 +90,81 @@ export function initSocket(
     socket.on("disconnect", () => {
         model.disconnected = true;
     });
+
+    socket.on("call_allowed", (to: string) => {
+        audioBroker.makeAudioCall(to);
+    })
+    initDistanceBasedCalls(model, (node: ModelNode) => {
+        audioBroker.closeCallWith(node.Id());
+    }, (node: ModelNode) => {
+        // TODO: Maybe Reconection will also have to use this.
+        socket.emit("call_intention", room, me.Id(), node.Id());
+    });
+}
+
+
+export function vecToThreeVector3([x, y]: Vec2) {
+    return new THREE.Vector3(x, y)
+}
+
+function initDistanceBasedCalls(model: Model, dropCall: (node: ModelNode) => void, initiateCall: (node: ModelNode) => void) {
+    const cancelCall = (node: ModelNode) => {
+        const timeout = timeouts.get(node);
+        timeouts.delete(node);
+        if (timeout) {
+            clearTimeout(timeout);
+        }
+        if (ongoingCalls.has(node)) {
+            dropCall(node);
+        }
+        ongoingCalls.delete(node);
+    };
+    const ongoingCalls = new Map<ModelNode, ModelNode>();
+    const timeouts = new Map<ModelNode, ReturnType<typeof setTimeout> | null>();
+    const deferCall = (node: ModelNode) => {
+        if (timeouts.has(node))
+            return;
+        const timeout = setTimeout(() => {
+            timeouts.delete(node);
+            if (!ongoingCalls.has(node)) {
+                initiateCall(node);
+            }
+            ongoingCalls.set(node, node);
+        }, 500);
+        timeouts.set(node, timeout);
+    };
+
+    function onPositionCheckCall(node: ModelNode) {
+        const me = model.me;
+        if (node === me) {
+            // If is the main player that is moving, we need to check it against all other players
+            model.nodes.filter(n => n != me).forEach(onPositionCheckCall);
+            return;
+        }
+        const myPosition = vecToThreeVector3(me.getPos());
+        const targetPosition = vecToThreeVector3(node.getPos());
+        const distance = myPosition.distanceTo(targetPosition);
+        // console.log(distance);
+        if (distance > 200) {
+            cancelCall(node);
+        }
+        else {
+            deferCall(node);
+        }
+    }
+
+    const attachPositionListeners = (node: ModelNode) => {
+        const nodePositionChanged = () => onPositionCheckCall(node);
+        node.addListener("position", nodePositionChanged);
+        node.once("removed", () => {
+            node.removeListener("position", nodePositionChanged);
+            cancelCall(node);
+        });
+        // DO initial check
+        nodePositionChanged();
+    };
+    model.nodes.forEach(attachPositionListeners);
+    model.on("added", attachPositionListeners);
 }
 
 export function throttle(func: Function, limit: number) {
