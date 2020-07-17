@@ -47,6 +47,7 @@ module.exports = {
     app: "./src/index.ts",
     landing: "./src/landing/index.ts",
     notsupported: "./src/notsupported/index.ts",
+    svelte: "./src/svelte/index.js",
   },
   output: {
     globalObject: "self",
@@ -80,6 +81,12 @@ module.exports = {
       template: "./src/landing/landing.html",
       chunks: ["landing"],
     }),
+    new HtmlWebpackPlugin({
+      filename: "svelte.html",
+      title: "svelte",
+      template: "./src/svelte/svelte.html",
+      chunks: ["svelte"],
+    }),
     new GoogleAnalyticsPlugin("UA-170107215-1"),
   ],
   module: {
@@ -89,6 +96,16 @@ module.exports = {
         use: "ts-loader",
         exclude: /node_modules/,
       },
+      {
+				test: /\.svelte$/,
+				use: {
+					loader: 'svelte-loader',
+					options: {
+						emitCss: true,
+						hotReload: true
+					}
+				}
+			},
       {
         test: /\.css$/,
         use: ["style-loader", "css-loader"],

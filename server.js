@@ -83,6 +83,10 @@ app.get("/join/*", function (req, res, next) {
   }
 });
 
+app.get("/svelte", function(req, res, next){
+  sendFile("svelte.html", res, next)
+})
+
 if (isProduction) {
   app.use(express.static("dist"));
 } else {
