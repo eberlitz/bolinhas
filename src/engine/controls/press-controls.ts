@@ -112,7 +112,7 @@ export class PressControls {
 
     private dragEnd() {
         if (!this._dragged) {
-            startContext(this.audioListener.context);
+            startContext(this.audioListener);
         }
         this._dragged = false;
     }

@@ -279,27 +279,27 @@ function initUI(target: HTMLElement) {
 
 export const viewport = initUI(target);
 
-function startAudioContext(context: AudioContext) {
-    const overlayEl = document.getElementById("overlay");
-    if (!overlayEl) {
-        return;
-    }
-    let dragged = false;
-    const ended = () => {
-        if (!dragged) {
-            overlayEl.removeEventListener("touchstart", ended);
-            overlayEl.removeEventListener("touchmove", moved);
-            overlayEl.removeEventListener("touchend", ended);
-            overlayEl.removeEventListener("mouseup", ended);
-            startContext(context);
-        }
-        dragged = false;
-    };
-    const moved = () => {
-        dragged = true;
-    };
-    overlayEl.addEventListener("touchstart", ended);
-    overlayEl.addEventListener("touchmove", moved);
-    overlayEl.addEventListener("touchend", ended);
-    overlayEl.addEventListener("mouseup", ended);
-}
+// function startAudioContext(context: AudioContext) {
+//     const overlayEl = document.getElementById("overlay");
+//     if (!overlayEl) {
+//         return;
+//     }
+//     let dragged = false;
+//     const ended = () => {
+//         if (!dragged) {
+//             overlayEl.removeEventListener("touchstart", ended);
+//             overlayEl.removeEventListener("touchmove", moved);
+//             overlayEl.removeEventListener("touchend", ended);
+//             overlayEl.removeEventListener("mouseup", ended);
+//             startContext(context);
+//         }
+//         dragged = false;
+//     };
+//     const moved = () => {
+//         dragged = true;
+//     };
+//     overlayEl.addEventListener("touchstart", ended);
+//     overlayEl.addEventListener("touchmove", moved);
+//     overlayEl.addEventListener("touchend", ended);
+//     overlayEl.addEventListener("mouseup", ended);
+// }
