@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no"
+    />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>bolinhas</title>
+  <link href="/landing.css" rel="stylesheet">
+<!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-170107215-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+    gtag("js", new Date());
+
+    gtag("config", "UA-170107215-1");
+  </script>
+</head>
+
+  <body>
+    <div class="newroom">
+      <input
+        class="form-input"
+        type="text"
+        id="room-name"
+        value="PurpleSquid"
+      />
+      <button
+        onclick="{window.location.href = '/join/' + document.getElementById('room-name').value}"
+      >
+        Join room
+      </button>
+    </div>
+  <script type="text/javascript" src="/landing.bundle.js"></script></body>
+</html>
